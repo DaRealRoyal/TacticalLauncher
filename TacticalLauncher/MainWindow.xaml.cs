@@ -21,7 +21,7 @@ namespace TacticalLauncher
     {
         const string downloadUrlVersion = "https://drive.google.com/uc?export=download&id=18FkOPeDDzqPPgmRb4XdzEHEchfM5U3HV";
         const string downloadUrlGame = "https://drive.google.com/uc?export=download&id=1Ts8BzGfmp_JF_XTchyQMPjiIT90PDKGk";
-        const string downloadUrlLauncher = "https://";
+        const string downloadUrlLauncher = "https://tacticalmath.games/download";
 
         string rootPath;
         string versionFile;
@@ -161,7 +161,8 @@ namespace TacticalLauncher
             try
             {
                 string onlineVersion = ((Version)e.UserState).ToString();
-                ZipFile.ExtractToDirectory(gameZip, rootPath, true);
+                File.Delete(Path.Combine(rootPath, "TMR"));
+                ZipFile.ExtractToDirectory(gameZip, rootPath);
                 File.Delete(gameZip);
 
                 File.WriteAllText(versionFile, onlineVersion);

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31313.79
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TacticalLauncher", "TacticalLauncher\TacticalLauncher.csproj", "{DD75BABF-DA35-4C03-8924-DC73E7176AFE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TacticalLauncher", "TacticalLauncher\TacticalLauncher.csproj", "{D9451EFA-10D3-413E-AD03-068770BACE8B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{DD75BABF-DA35-4C03-8924-DC73E7176AFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DD75BABF-DA35-4C03-8924-DC73E7176AFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DD75BABF-DA35-4C03-8924-DC73E7176AFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DD75BABF-DA35-4C03-8924-DC73E7176AFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9451EFA-10D3-413E-AD03-068770BACE8B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9451EFA-10D3-413E-AD03-068770BACE8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9451EFA-10D3-413E-AD03-068770BACE8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9451EFA-10D3-413E-AD03-068770BACE8B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {711FC999-6C67-4F5D-9F05-25CEAFB23A72}
+		SolutionGuid = {6BDFE163-3579-44C4-8036-D4B342A2D557}
 	EndGlobalSection
 EndGlobal

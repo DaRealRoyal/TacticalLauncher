@@ -4,8 +4,6 @@
              xmlns:local="clr-namespace:TacticalLauncher"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <Style x:Key="TacticalMathFont">
-            <Setter Property="TextElement.FontFamily" Value="fonts/#TacticalMath-Regular"/>
-        </Style>
+         
     </Application.Resources>
 </Application>
