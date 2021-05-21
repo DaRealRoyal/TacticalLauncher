@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>images/icon.ico</ApplicationIcon>
+    <StartupObject>TacticalLauncher.App</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="fonts\TacticalMath-Regular.otf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="fonts\TacticalMath-Regular.otf" />
+    <Resource Include="images\olena-sergienko-3BlVILvh9hM-unsplash.jpg" />
+  </ItemGroup>
+
+</Project>
