@@ -161,7 +161,7 @@ namespace TacticalLauncher
             try
             {
                 string onlineVersion = ((Version)e.UserState).ToString();
-                File.Delete(Path.Combine(rootPath, "TMR"));
+                Directory.Delete(Path.Combine(rootPath, "TMR"), true);
                 ZipFile.ExtractToDirectory(gameZip, rootPath);
                 File.Delete(gameZip);
 
