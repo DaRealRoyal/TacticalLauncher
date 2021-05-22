@@ -45,6 +45,7 @@ namespace TacticalLauncher
                     case LauncherStatus.ready:
                         PlayButton.Content = "Play";
                         PlayButton.IsEnabled = true;
+                        ProgressBar.Value = ProgressBar.Maximum;
                         break;
                     case LauncherStatus.failed:
                         PlayButton.Content = "Update Failed - Retry";
@@ -150,8 +151,12 @@ namespace TacticalLauncher
 
         void UpdateProgressText(object sender, FileDownloader.DownloadProgress e)
         {
+            ProgressBar.Minimum = 0;
+            ProgressBar.Maximum = e.TotalBytesToReceive;
+
             if (e.TotalBytesToReceive > 0 && e.TotalBytesToReceive != e.BytesReceived)
             {
+                ProgressBar.Value = e.BytesReceived;
                 Progress.Text = "Progress: " + e.BytesReceived + "/" + e.TotalBytesToReceive + " (" + e.ProgressPercentage + "%)";
             }
             else

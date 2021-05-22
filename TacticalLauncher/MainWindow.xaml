@@ -10,7 +10,8 @@
     <Grid>
         <Image Stretch="UniformToFill" Source="/images/olena-sergienko-3BlVILvh9hM-unsplash.jpg"/>
         <TextBlock Name="NameText" Text="Tactical Math Returns" FontSize="96" FontFamily="/fonts/TacticalMath-Regular.otf#Tactical Math" VerticalAlignment="Top" HorizontalAlignment="Center" Foreground="White" Margin="0,200,0,0"/>
-        <Button Name="PlayButton" Content="Checking For Updates..." IsEnabled="false" Click="PlayButton_Click" FontSize="32" Margin="0,0,0,200" VerticalAlignment="Bottom" HorizontalAlignment="Center" MinWidth="500" Padding="20,15,20,15"/>
+        <Button Name="PlayButton" Content="Checking For Updates..." IsEnabled="false" Click="PlayButton_Click" FontSize="32" Margin="0,0,0,200" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="500" Padding="20,15,20,15"/>
+        <ProgressBar Name="ProgressBar" Height="10" Margin="0,0,0,190" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="500" />
         <TextBlock Name="Progress" VerticalAlignment="Bottom" HorizontalAlignment="center" FontSize="20" Foreground="White" Margin="0,0,0,160"/>
         <TextBlock Name="VersionTextGameLabel" Text="TMR:" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="White" Margin="0,0,65,30"/>
         <TextBlock Name="VersionTextGame" Text="0" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="White" Margin="0,0,5,30"/>
