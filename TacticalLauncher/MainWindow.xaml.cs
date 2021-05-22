@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Navigation;
 
@@ -14,6 +15,7 @@ namespace TacticalLauncher
         ready,
         failed,
         downloadingGame,
+        installingGame,
         downloadingUpdate
     }
 
@@ -29,6 +31,8 @@ namespace TacticalLauncher
         string gameExe;
         string gamePath;
 
+        Version localVersion;
+
         LauncherStatus _status;
         internal LauncherStatus Status
         {
@@ -40,15 +44,23 @@ namespace TacticalLauncher
                 {
                     case LauncherStatus.ready:
                         PlayButton.Content = "Play";
+                        PlayButton.IsEnabled = true;
                         break;
                     case LauncherStatus.failed:
                         PlayButton.Content = "Update Failed - Retry";
+                        PlayButton.IsEnabled = true;
                         break;
                     case LauncherStatus.downloadingGame:
                         PlayButton.Content = "Downloading Game...";
+                        PlayButton.IsEnabled = false;
+                        break;
+                    case LauncherStatus.installingGame:
+                        PlayButton.Content = "Installing Game...";
+                        PlayButton.IsEnabled = false;
                         break;
                     case LauncherStatus.downloadingUpdate:
                         PlayButton.Content = "Downloading Update...";
+                        PlayButton.IsEnabled = false;
                         break;
                     default:
                         break;
@@ -66,8 +78,6 @@ namespace TacticalLauncher
             gameZip = Path.Combine(rootPath, "TMR.zip");
             gamePath = Path.Combine(rootPath, "TMR");
             gameExe = Path.Combine(gamePath, "TacticalMathReturns.exe");
-
-            SquirrelLauncherUpdates();
         }
 
         void SquirrelLauncherUpdates()
@@ -84,27 +94,20 @@ namespace TacticalLauncher
             }
         }
 
-        void CheckForUpdates()
+        async void CheckForUpdates()
         {
+            await Task.Run(() => SquirrelLauncherUpdates());
+
             if (File.Exists(versionFile) && File.Exists(gameExe))
             {
-                Version localVersion = new Version(File.ReadAllText(versionFile));
+                await Task.Run(() => localVersion = new Version(File.ReadAllText(versionFile)));
                 VersionTextGame.Text = localVersion.ToString();
 
                 try
                 {
                     WebClient webClient = new WebClient();
-                    Version onlineVersion = new Version(webClient.DownloadString(downloadUrlVersion).TrimStart('v'));
-
-                    if (onlineVersion != localVersion)
-                    {
-                        InstallGame(true, onlineVersion);
-                    }
-                    else
-                    {
-                        Status = LauncherStatus.ready;
-                        PlayButton.IsEnabled = true;
-                    }
+                    webClient.DownloadStringCompleted += new DownloadStringCompletedEventHandler(DownloadVersionFileCompletedCallback);
+                    webClient.DownloadStringAsync(new Uri(downloadUrlVersion));
                 }
                 catch (Exception ex)
                 {
@@ -114,11 +117,11 @@ namespace TacticalLauncher
             }
             else
             {
-                InstallGame(false, new Version(0, 0));
+                DownloadGame(false, new Version(0, 0));
             }
         }
 
-        void InstallGame(bool _isUpdate, Version _onlineVersion)
+        void DownloadGame(bool _isUpdate, Version _onlineVersion)
         {
             try
             {
@@ -147,9 +150,9 @@ namespace TacticalLauncher
 
         void UpdateProgressText(object sender, FileDownloader.DownloadProgress e)
         {
-            if (e.TotalBytesToReceive != -1 && e.TotalBytesToReceive != e.BytesReceived)
+            if (e.TotalBytesToReceive > 0 && e.TotalBytesToReceive != e.BytesReceived)
             {
-                Progress.Text = "Progress: " + e.BytesReceived + "/" + e.TotalBytesToReceive + " (" + +Math.Round((float)e.BytesReceived / (long)e.TotalBytesToReceive * 100) + "%)";
+                Progress.Text = "Progress: " + e.BytesReceived + "/" + e.TotalBytesToReceive + " (" + e.ProgressPercentage + "%)";
             }
             else
             {
@@ -157,14 +160,42 @@ namespace TacticalLauncher
             }
         }
 
+        void DownloadVersionFileCompletedCallback(object sender, DownloadStringCompletedEventArgs e)
+        {
+            try
+            {
+                Version onlineVersion = new Version(e.Result.TrimStart('v'));
+
+                if (onlineVersion != localVersion)
+                {
+                    DownloadGame(true, onlineVersion);
+                }
+                else
+                {
+                    Status = LauncherStatus.ready;
+                }
+            }
+            catch (Exception ex)
+            {
+                Status = LauncherStatus.failed;
+                MessageBox.Show($"Error checking for updates: {ex}");
+            }
+        }
+
         void DownloadGameCompletedCallback(object sender, AsyncCompletedEventArgs e)
         {
+            string onlineVersion = ((Version)e.UserState).ToString();
+            InstallGame(onlineVersion);
+        }
+
+        async void InstallGame(string onlineVersion)
+        {
+            Status = LauncherStatus.installingGame;
             Progress.Text = "";
             try
             {
-                string onlineVersion = ((Version)e.UserState).ToString();
                 if (Directory.Exists(gamePath)) Directory.Delete(gamePath, true);
-                ZipFile.ExtractToDirectory(gameZip, rootPath);
+                await Task.Run(() => ZipFile.ExtractToDirectory(gameZip, rootPath));
                 File.Delete(gameZip);
 
                 File.WriteAllText(versionFile, onlineVersion);
@@ -177,7 +208,6 @@ namespace TacticalLauncher
                 Status = LauncherStatus.failed;
                 MessageBox.Show($"Error installing game: {ex}");
             }
-            PlayButton.IsEnabled = true;
         }
 
         void Window_ContentRendered(object sender, EventArgs e)
@@ -203,6 +233,7 @@ namespace TacticalLauncher
                 CheckForUpdates();
             }
         }
+
         void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
             var processStartInfo = new ProcessStartInfo()
