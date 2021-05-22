@@ -27,6 +27,7 @@ namespace TacticalLauncher
         string versionFile;
         string gameZip;
         string gameExe;
+        string gamePath;
 
         LauncherStatus _status;
         internal LauncherStatus Status
@@ -63,7 +64,8 @@ namespace TacticalLauncher
             rootPath = Directory.GetParent(Directory.GetCurrentDirectory()).ToString();
             versionFile = Path.Combine(rootPath, "VersionTMR.txt");
             gameZip = Path.Combine(rootPath, "TMR.zip");
-            gameExe = Path.Combine(rootPath, "TMR", "TacticalMathReturns.exe");
+            gamePath = Path.Combine(rootPath, "TMR");
+            gameExe = Path.Combine(gamePath, "TacticalMathReturns.exe");
 
             SquirrelLauncherUpdates();
         }
@@ -161,7 +163,7 @@ namespace TacticalLauncher
             try
             {
                 string onlineVersion = ((Version)e.UserState).ToString();
-                Directory.Delete(Path.Combine(rootPath, "TMR"), true);
+                if (Directory.Exists(gamePath)) Directory.Delete(gamePath, true);
                 ZipFile.ExtractToDirectory(gameZip, rootPath);
                 File.Delete(gameZip);
 
