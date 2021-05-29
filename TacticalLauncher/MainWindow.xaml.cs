@@ -22,7 +22,7 @@ namespace TacticalLauncher
     public partial class MainWindow : Window
     {
         const string downloadUrlVersion = "https://drive.google.com/uc?export=download&id=18FkOPeDDzqPPgmRb4XdzEHEchfM5U3HV";
-        const string downloadUrlGame = "https://drive.google.com/uc?export=download&id=1Ts8BzGfmp_JF_XTchyQMPjiIT90PDKGk";
+        const string downloadUrlGame = "https://drive.google.com/uc?export=download&id=1FJL0sBPvt5AEdbkgcKshO15Vv-kuJ6gd";
         const string downloadUrlLauncher = "https://tacticalmath.games/download";
 
         string rootPath;
@@ -75,9 +75,9 @@ namespace TacticalLauncher
             VersionTextLauncher.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
             rootPath = Directory.GetParent(Directory.GetCurrentDirectory()).ToString();
-            versionFile = Path.Combine(rootPath, "VersionTMR.txt");
-            gameZip = Path.Combine(rootPath, "TMR.zip");
-            gamePath = Path.Combine(rootPath, "TMR");
+            versionFile = Path.Combine(rootPath, "TacticalMathReturns.version");
+            gameZip = Path.Combine(rootPath, "TacticalMathReturns.zip");
+            gamePath = Path.Combine(rootPath, "TacticalMathReturns");
             gameExe = Path.Combine(gamePath, "TacticalMathReturns.exe");
         }
 
@@ -102,7 +102,7 @@ namespace TacticalLauncher
             if (File.Exists(versionFile) && File.Exists(gameExe))
             {
                 await Task.Run(() => localVersion = new Version(File.ReadAllText(versionFile)));
-                VersionTextGame.Text = localVersion.ToString();
+                VersionTextGame.Text = "v" + localVersion.ToString();
 
                 try
                 {
