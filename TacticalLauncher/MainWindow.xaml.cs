@@ -205,7 +205,7 @@ namespace TacticalLauncher
 
                 File.WriteAllText(versionFile, onlineVersion);
 
-                VersionTextGame.Text = onlineVersion;
+                VersionTextGame.Text = "v" + onlineVersion;
                 Status = LauncherStatus.ready;
             }
             catch (Exception ex)
