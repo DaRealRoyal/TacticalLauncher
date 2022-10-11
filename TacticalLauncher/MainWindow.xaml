@@ -3,23 +3,49 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TacticalLauncher"
+        d:DataContext="{d:DesignInstance Type=local:Game}"
         mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
         ContentRendered="Window_ContentRendered"
-         FontFamily="/fonts/TacticalFont.otf#TacticalFont"
         Title="Tactical Launcher" Height="720" Width="1280" ResizeMode="NoResize">
     <Grid>
-        <Image Stretch="UniformToFill" Source="/images/olena-sergienko-3BlVILvh9hM-unsplash.jpg"/>
-        <TextBlock Name="NameText" Text="Tactical Math Returns" FontSize="96" VerticalAlignment="Top" HorizontalAlignment="Center" Foreground="White" Margin="0,200,0,0"/>
-        <Button Name="PlayButton" Content="Checking For Updates..." IsEnabled="false" Click="PlayButton_Click" FontSize="32" Margin="0,0,0,200" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="500" Padding="20,15,20,15"/>
-        <ProgressBar Name="ProgressBar" Height="10" Margin="0,0,0,190" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="500" />
-        <TextBlock Name="Progress" VerticalAlignment="Bottom" HorizontalAlignment="center" FontSize="20" Foreground="White" Margin="0,0,0,160"/>
-        <TextBlock Name="VersionTextGameLabel" Text="TMR:" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="White" Margin="0,0,65,30"/>
-        <TextBlock Name="VersionTextGame" Text="0" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="White" Margin="0,0,5,30"/>
-        <TextBlock Name="VersionTextLauncherLabel" Text="Launcher:" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="White" Margin="0,0,65,5"/>
-        <TextBlock Name="VersionTextLauncher" Text="0" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="White" Margin="0,0,5,5"/>
-        <TextBlock Name="URL" VerticalAlignment="Bottom" HorizontalAlignment="Left" FontSize="20" Foreground="White" Margin="5,0,0,5">
-            <Hyperlink NavigateUri="https://tacticalmath.games/" RequestNavigate="Hyperlink_RequestNavigate" Foreground="White">https://tacticalmath.games/</Hyperlink>
-        </TextBlock>
+        <TabControl TabStripPlacement="Left">
+            <TabControl.Resources>
+                <Style TargetType="{x:Type TabItem}">
+                    <Setter Property="HeaderTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <ContentPresenter Content="{TemplateBinding Content}">
+                                    <ContentPresenter.LayoutTransform>
+                                        <RotateTransform Angle="270" />
+                                    </ContentPresenter.LayoutTransform>
+                                </ContentPresenter>
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="Padding" Value="3" />
+                </Style>
+            </TabControl.Resources>
+            <TabItem Name="TmrTab" Header="Tactical Math Returns" FontFamily="/fonts/TacticalFont.otf#TacticalFont">
+                <Grid>
+                    <Image Stretch="UniformToFill" Source="/images/olena-sergienko-3BlVILvh9hM-unsplash.jpg"/>
+                    <TextBlock Text="Tactical Math Returns" FontSize="96" VerticalAlignment="Top" HorizontalAlignment="Center" Foreground="White" Margin="0,200,0,0"/>
+                    <TextBlock VerticalAlignment="Bottom" HorizontalAlignment="Left" FontSize="20" Foreground="White" Margin="5,0,0,5"><Hyperlink NavigateUri="https://tacticalmath.games/" RequestNavigate="Hyperlink_RequestNavigate" Foreground="White">https://tacticalmath.games/</Hyperlink></TextBlock>
+                    <TextBlock Text="{Binding LocalVersion, StringFormat=v{0}, TargetNullValue=''}" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="White" Margin="0,0,5,5"/>
+                    <TextBlock Text="{Binding ProgressText}" VerticalAlignment="Bottom" HorizontalAlignment="center" FontSize="20" Foreground="White" Margin="0,0,0,160"/>
+                    <ProgressBar Minimum="0" Value="{Binding DownloadSizeCurrent}" Maximum="{Binding DownloadSize}" Height="10" Margin="0,0,0,190" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="500"/>
+                    <Button Content="{Binding StatusText}" IsEnabled="{Binding IsReadyOrFailed}" Command="{Binding PlayCommand}" FontSize="32" Margin="0,0,0,200" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="500" Padding="20,15,20,15"/>
+                </Grid>
+            </TabItem>
+            <TabItem Name="MD2Tab" Header="Mothership Defender 2">
+            </TabItem>
+            <TabItem Header="Settings">
+                <Grid>
+                    <TextBlock x:Name="VersionTextLauncherLabel" Text="Launcher Version:" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="Black" Margin="0,0,80,0"/>
+                    <TextBlock x:Name="VersionTextLauncher" Text="0" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="Black"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>
