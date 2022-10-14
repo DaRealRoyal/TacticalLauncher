@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Octokit;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -128,7 +129,7 @@ namespace TacticalLauncher
         }
 
         /// <summary>
-        /// Creates instance of the Game
+        /// Creates an instance of Game using download links
         /// </summary>
         /// <param name="url">Download URL of the game's .zip file</param>
         /// <param name="versionUrl">Download URL of the text file containing the current verison string of the game</param>
@@ -144,6 +145,33 @@ namespace TacticalLauncher
             versionFile = Path.Combine(gamesPath, name + ".version");
 
             CheckUpdates();
+        }
+
+        /// <summary>
+        /// Creates an instance of Game using GitHub Releases
+        /// </summary>
+        public Game(string owner, string repo, string exe)
+        {
+            gameName = repo;
+            gamePath = Path.Combine(gamesPath, gameName);
+            gameExe = Path.Combine(gamePath, exe);
+            //downloadUrl = url;
+            //downloadVersionUrl = versionUrl;
+            versionFile = Path.Combine(gamesPath, gameName + ".version");
+
+            GetGitHubData(owner, repo, exe);
+        }
+
+        public async void GetGitHubData(string owner, string repo, string exe)
+        {
+            var client = new GitHubClient(new ProductHeaderValue("TacticalLauncher"));
+
+            var releases = await client.Repository.Release.GetAll(owner, repo);
+            var latest = releases[0];   // latest release
+            Console.WriteLine(
+                "The latest release is tagged at {0} and has {1}",
+                latest.TagName,
+                latest.Assets[1].BrowserDownloadUrl);   // TODO: get asset by name, not by index
         }
 
         public void CheckUpdates()

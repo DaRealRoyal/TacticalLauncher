@@ -15,6 +15,7 @@ namespace TacticalLauncher
             "https://drive.google.com/uc?export=download&id=1FJL0sBPvt5AEdbkgcKshO15Vv-kuJ6gd",
             "https://drive.google.com/uc?export=download&id=18FkOPeDDzqPPgmRb4XdzEHEchfM5U3HV",
             "TacticalMathReturns", "TacticalMathReturns.exe");
+        readonly Game tmrGitHub = new Game("DaRealRoyal", "TacticalMathReturns", "TacticalMathReturns.exe");
         readonly Game md2 = new Game(
             "",
             "",
@@ -26,6 +27,7 @@ namespace TacticalLauncher
             VersionTextLauncher.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
             TmrTab.DataContext = tmr;
+            TmrGitHubTab.DataContext = tmrGitHub;
             MD2Tab.DataContext = md2;
         }
 
