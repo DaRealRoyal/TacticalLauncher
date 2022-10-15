@@ -1,10 +1,13 @@
-﻿using System;
+﻿using Octokit;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -19,6 +22,7 @@ namespace TacticalLauncher
         clickInstall,
         downloading,
         installing,
+        failedRetry,
         failed
     }
 
@@ -29,12 +33,16 @@ namespace TacticalLauncher
         static readonly string gamesPath = Path.Combine(launcherPath, "Games");
         static readonly string downloadPath = Path.Combine(gamesPath, "Downloads");
 
+        static GitHubClient client = new GitHubClient(new ProductHeaderValue("TacticalLauncher"));
+
         readonly string versionFile;
         readonly string gameName;
-        readonly string gamePath;
-        readonly string downloadUrl;
+        readonly string gameExeName;
         readonly string downloadVersionUrl;
-        readonly string gameExe;
+        string downloadUrl;
+        string gamePath;
+        string gameExe;
+
 
         private GameState _state;
         public GameState State
@@ -64,8 +72,10 @@ namespace TacticalLauncher
                         return "Update";
                     case GameState.clickInstall:
                         return "Install";
-                    case GameState.failed:
+                    case GameState.failedRetry:
                         return "Failed - Retry?";
+                    case GameState.failed:
+                        return "Failed";
                     case GameState.downloading:
                         return "Downloading...";
                     case GameState.installing:
@@ -81,7 +91,7 @@ namespace TacticalLauncher
             _state == GameState.clickInstall;
 
         public bool IsReadyOrFailed =>
-            IsReady || _state == GameState.failed;
+            IsReady || _state == GameState.failedRetry;
 
         private long _downloadSize;
         public long DownloadSize
@@ -116,6 +126,19 @@ namespace TacticalLauncher
             }
         }
 
+        private Version _onlineVersion;
+
+        public Version OnlineVersion
+        {
+            get { return _onlineVersion; }
+            set
+            {
+                _onlineVersion = value;
+                RaisePropertyChanged();
+                RaisePropertyChanged(nameof(OnlineVersionVisibility));
+            }
+        }
+
         private Version _localVersion;
         public Version LocalVersion
         {
@@ -124,11 +147,17 @@ namespace TacticalLauncher
             {
                 _localVersion = value;
                 RaisePropertyChanged();
+                RaisePropertyChanged(nameof(OnlineVersionVisibility));
             }
         }
 
+        public Visibility OnlineVersionVisibility
+        {
+            get { return Equals(_onlineVersion, _localVersion) ? Visibility.Hidden : Visibility.Visible; }
+        }
+
         /// <summary>
-        /// Creates instance of the Game
+        /// Creates an instance of Game using download links
         /// </summary>
         /// <param name="url">Download URL of the game's .zip file</param>
         /// <param name="versionUrl">Download URL of the text file containing the current verison string of the game</param>
@@ -137,70 +166,160 @@ namespace TacticalLauncher
         public Game(string url, string versionUrl, string name, string exe)
         {
             gameName = name;
+            gameExeName = exe;
             gamePath = Path.Combine(gamesPath, gameName);
+            versionFile = Path.Combine(gamesPath, gameName + "-version.txt");
+            if (File.Exists(versionFile)) LocalVersion = new Version(File.ReadAllText(versionFile)); // TODO is if check needed?
+            if (!Directory.Exists(gamePath))
+            {
+                // fallback for folders like MothershipDefender2_v2.3.1
+                var gamePath2 = gamePath + "_v" + LocalVersion;
+                if (Directory.Exists(gamePath2)) gamePath = gamePath2;
+            }
             gameExe = Path.Combine(gamePath, exe);
+
             downloadUrl = url;
             downloadVersionUrl = versionUrl;
-            versionFile = Path.Combine(gamesPath, name + ".version");
-
             CheckUpdates();
+        }
+
+        /// <summary>
+        /// Creates an instance of Game using GitHub Releases
+        /// </summary>
+        public Game(string owner, string name, string exe)
+        {
+            gameName = name;
+            gameExeName = exe;
+            gamePath = Path.Combine(gamesPath, gameName);
+            versionFile = Path.Combine(gamesPath, gameName + "-version.txt");
+            if (File.Exists(versionFile)) LocalVersion = new Version(File.ReadAllText(versionFile)); // TODO is if check needed?
+            if (!Directory.Exists(gamePath))
+            {
+                // fallback for folders like MothershipDefender2_v2.3.1
+                var gamePath2 = gamePath + "_v" + LocalVersion;
+                if (Directory.Exists(gamePath2)) gamePath = gamePath2;
+            }
+            gameExe = Path.Combine(gamePath, exe);
+
+            GetGitHubData(owner, name, exe);
+        }
+
+        public bool UpdateRateLimiter()
+        {
+            var lastModified = File.GetLastWriteTime(versionFile);
+            Console.WriteLine(gameName + " last checked " + lastModified.ToString("yyyy-MM-dd HH:mm:ss"));
+
+            if (DateTime.Now.Subtract(lastModified) > TimeSpan.FromHours(1))
+            {
+                File.SetLastWriteTime(versionFile, DateTime.Now);
+                return false;
+            }
+            return true;
+        }
+
+        public async void GetGitHubData(string owner, string repo, string exe)
+        {
+            if (UpdateRateLimiter() && File.Exists(gameExe))
+            {
+                State = GameState.clickPlay;
+                return;
+            }
+
+            try
+            {
+                var releases = await client.Repository.Release.GetAll(owner, repo);
+                var latest = releases[0];
+                downloadUrl = GitHubAssetDownload(latest.Assets, gameName + "(.+)?.zip");
+                OnlineVersion = new Version(latest.TagName.TrimStart('v'));
+                Console.WriteLine("{0}/{1} {2} -> {3}", owner, repo, OnlineVersion, downloadUrl);
+
+                if (File.Exists(versionFile) && File.Exists(gameExe))
+                {
+                    LocalVersion = new Version(File.ReadAllText(versionFile));
+                    State = OnlineVersion == _localVersion ? GameState.clickPlay : GameState.clickUpdate;
+                }
+                else
+                    State = GameState.clickInstall;
+            }
+            catch (Exception ex)
+            {
+                State = GameState.failed;
+                ProgressText = $"{ex.GetType().Name} while checking for updates - {ex.Message}";
+                if (File.Exists(gameExe)) State = GameState.clickPlay;
+            }
+        }
+
+        public string GitHubAssetDownload(IReadOnlyList<ReleaseAsset> releaseAssets, string name)
+        {
+            foreach (var asset in releaseAssets)
+            {
+                if (Regex.IsMatch(asset.Name, name, RegexOptions.IgnoreCase | RegexOptions.Compiled)) return asset.BrowserDownloadUrl;
+            }
+            return "";
         }
 
         public void CheckUpdates()
         {
-            if (File.Exists(versionFile) && File.Exists(gameExe))
+            if (UpdateRateLimiter() && File.Exists(gameExe))
             {
-                LocalVersion = new Version(File.ReadAllText(versionFile));
-
-                try
-                {
-                    WebClient webClient = new WebClient();
-                    webClient.DownloadStringCompleted += new DownloadStringCompletedEventHandler(VersionCallback);
-                    webClient.DownloadStringAsync(new Uri(downloadVersionUrl));
-                }
-                catch (Exception ex)
-                {
-                    State = GameState.failed;
-                    MessageBox.Show($"Error checking for updates: {ex}");
-                }
+                State = GameState.clickPlay;
+                return;
             }
-            else
-                State = GameState.clickInstall;
+
+            try
+            {
+                WebClient webClient = new WebClient();
+                webClient.DownloadStringCompleted += new DownloadStringCompletedEventHandler(VersionCallback);
+                webClient.DownloadStringAsync(new Uri(downloadVersionUrl));
+            }
+            catch (Exception ex)
+            {
+                State = GameState.failedRetry;
+                ProgressText = $"{ex.GetType().Name} while checking for updates - {ex.Message}";
+                if (File.Exists(gameExe)) State = GameState.clickPlay;
+            }
         }
 
         private void VersionCallback(object sender, DownloadStringCompletedEventArgs e)
         {
             try
             {
-                Version onlineVersion = new Version(e.Result.TrimStart('v'));
-                State = onlineVersion == _localVersion ? GameState.clickPlay : GameState.clickUpdate;
+                OnlineVersion = new Version(e.Result.TrimStart('v'));
+                Console.WriteLine("{0} {1} -> {2}", gameName, OnlineVersion, downloadUrl);
+
+                if (File.Exists(versionFile) && File.Exists(gameExe))
+                {
+                    State = OnlineVersion == _localVersion ? GameState.clickPlay : GameState.clickUpdate;
+                }
+                else
+                    State = GameState.clickInstall;
             }
             catch (Exception ex)
             {
-                State = GameState.failed;
-                MessageBox.Show($"Error checking for updates: {ex}");
+                State = GameState.failedRetry;
+                ProgressText = $"{ex.GetType().Name} while checking for updates - {ex.Message}";
+                if (File.Exists(gameExe)) State = GameState.clickPlay;
             }
         }
 
-        private void DownloadGame(Version _onlineVersion)
+        private void DownloadGame()
         {
             State = GameState.downloading;
             try
             {
                 WebClient webClient = new WebClient();
-                _onlineVersion = new Version(webClient.DownloadString(downloadVersionUrl).TrimStart('v'));
 
                 Directory.CreateDirectory(downloadPath);
 
                 FileDownloader downloader = new FileDownloader();
                 downloader.DownloadProgressChanged += new FileDownloader.DownloadProgressChangedEventHandler(UpdateProgressCallback);
                 downloader.DownloadFileCompleted += new AsyncCompletedEventHandler(DownloadCompletedCallback);
-                downloader.DownloadFileAsync(downloadUrl, Path.Combine(downloadPath, gameName + _onlineVersion + ".zip"), _onlineVersion);
+                downloader.DownloadFileAsync(downloadUrl, Path.Combine(downloadPath, gameName + "_v" + OnlineVersion + ".zip"), OnlineVersion);
             }
             catch (Exception ex)
             {
-                State = GameState.failed;
-                MessageBox.Show($"Error downloading game: {ex}");
+                State = GameState.failedRetry;
+                MessageBox.Show($"Error downloading game: {ex.Message}");
             }
         }
 
@@ -220,26 +339,35 @@ namespace TacticalLauncher
             InstallGame((Version)e.UserState);
         }
 
-        private async void InstallGame(Version onlineVersion)
+        private async void InstallGame(Version version)
         {
             State = GameState.installing;
 
             try
             {
-                string zipPath = Path.Combine(downloadPath, gameName + onlineVersion + ".zip");
+                string zipPath = Path.Combine(downloadPath, gameName + "_v" + version + ".zip");
 
                 if (Directory.Exists(gamePath)) Directory.Delete(gamePath, true);
                 await Task.Run(() => ZipFile.ExtractToDirectory(zipPath, gamesPath));
                 File.Delete(zipPath);
 
-                File.WriteAllText(versionFile, onlineVersion.ToString());
-                LocalVersion = onlineVersion;
+                File.WriteAllText(versionFile, version.ToString());
+                LocalVersion = version;
+
+                if (!Directory.Exists(gamePath))
+                {
+                    // fallback for folders like MothershipDefender2_v2.3.1
+                    var gamePath2 = gamePath + "_v" + LocalVersion;
+                    if (Directory.Exists(gamePath2)) gamePath = gamePath2;
+                }
+                gameExe = Path.Combine(gamePath, gameExeName);
+
                 State = GameState.clickPlay;
             }
             catch (Exception ex)
             {
-                State = GameState.failed;
-                MessageBox.Show($"Error installing game: {ex}");
+                State = GameState.failedRetry;
+                MessageBox.Show($"Error installing game: {ex.Message}");
             }
         }
 
@@ -260,10 +388,13 @@ namespace TacticalLauncher
                 case GameState.clickInstall:
                 case GameState.clickUpdate:
                     State = GameState.downloading;
-                    DownloadGame(new Version(0, 0));
+                    DownloadGame();
                     break;
-                case GameState.failed:
-                    CheckUpdates();
+                case GameState.failedRetry:
+                    if (downloadVersionUrl == null)
+                        DownloadGame();
+                    else
+                        CheckUpdates();
                     break;
             }
         }

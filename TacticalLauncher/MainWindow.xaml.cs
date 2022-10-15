@@ -11,20 +11,19 @@ namespace TacticalLauncher
     {
         private const string downloadUrlLauncher = "https://tacticalmath.games/download";
 
-        readonly Game tmr = new Game(
-            "https://drive.google.com/uc?export=download&id=1FJL0sBPvt5AEdbkgcKshO15Vv-kuJ6gd",
-            "https://drive.google.com/uc?export=download&id=18FkOPeDDzqPPgmRb4XdzEHEchfM5U3HV",
-            "TacticalMathReturns", "TacticalMathReturns.exe");
-        readonly Game md2 = new Game(
-            "",
-            "",
-            "MothershipDefender2", "MothershipDefender2.exe");
+        //readonly Game tmrGDrive = new Game(
+        //    "https://drive.google.com/uc?export=download&id=1FJL0sBPvt5AEdbkgcKshO15Vv-kuJ6gd",
+        //    "https://drive.google.com/uc?export=download&id=18FkOPeDDzqPPgmRb4XdzEHEchfM5U3HV",
+        //    "TacticalMathReturns", "TacticalMathReturns.exe");
+        readonly Game tmr = new Game("DaRealRoyal", "TacticalMathReturns", "TacticalMathReturns.exe");
+        readonly Game md2 = new Game("Nalsai", "MothershipDefender2", "MothershipDefender2.exe");
 
         public MainWindow()
         {
             InitializeComponent();
             VersionTextLauncher.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
+            //TmrTab.DataContext = tmrGDrive;
             TmrTab.DataContext = tmr;
             MD2Tab.DataContext = md2;
         }
