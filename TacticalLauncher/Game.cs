@@ -206,15 +206,18 @@ namespace TacticalLauncher
 
         public bool UpdateRateLimiter()
         {
-            var lastModified = File.GetLastWriteTime(versionFile);
-            Console.WriteLine(gameName + " last checked " + lastModified.ToString("yyyy-MM-dd HH:mm:ss"));
-
-            if (DateTime.Now.Subtract(lastModified) > TimeSpan.FromHours(1))
+            if (File.Exists(versionFile))
             {
-                File.SetLastWriteTime(versionFile, DateTime.Now);
-                return false;
+                var lastModified = File.GetLastWriteTime(versionFile);
+                Console.WriteLine(gameName + " last checked " + lastModified.ToString("yyyy-MM-dd HH:mm:ss"));
+
+                if (DateTime.Now.Subtract(lastModified) < TimeSpan.FromHours(1))
+                {
+                    File.SetLastWriteTime(versionFile, DateTime.Now);
+                    return true;
+                }
             }
-            return true;
+            return false;
         }
 
         public async void GetGitHubData(string owner, string repo, string exe)
