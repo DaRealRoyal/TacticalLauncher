@@ -22,6 +22,7 @@ namespace TacticalLauncher
         clickInstall,
         downloading,
         installing,
+        failedRetry,
         failed
     }
 
@@ -71,8 +72,10 @@ namespace TacticalLauncher
                         return "Update";
                     case GameState.clickInstall:
                         return "Install";
-                    case GameState.failed:
+                    case GameState.failedRetry:
                         return "Failed - Retry?";
+                    case GameState.failed:
+                        return "Failed";
                     case GameState.downloading:
                         return "Downloading...";
                     case GameState.installing:
@@ -88,7 +91,7 @@ namespace TacticalLauncher
             _state == GameState.clickInstall;
 
         public bool IsReadyOrFailed =>
-            IsReady || _state == GameState.failed;
+            IsReady || _state == GameState.failedRetry;
 
         private long _downloadSize;
         public long DownloadSize
@@ -222,7 +225,8 @@ namespace TacticalLauncher
             catch (Exception ex)
             {
                 State = GameState.failed;
-                MessageBox.Show($"Error checking for updates: {ex}");
+                ProgressText = $"{ex.GetType().Name} while checking for updates - {ex.Message}";
+                if (File.Exists(gameExe)) State = GameState.clickPlay;
             }
         }
 
@@ -245,8 +249,9 @@ namespace TacticalLauncher
             }
             catch (Exception ex)
             {
-                State = GameState.failed;
-                MessageBox.Show($"Error checking for updates: {ex}");
+                State = GameState.failedRetry;
+                ProgressText = $"{ex.GetType().Name} while checking for updates - {ex.Message}";
+                if (File.Exists(gameExe)) State = GameState.clickPlay;
             }
         }
 
@@ -266,8 +271,9 @@ namespace TacticalLauncher
             }
             catch (Exception ex)
             {
-                State = GameState.failed;
-                MessageBox.Show($"Error checking for updates: {ex}");
+                State = GameState.failedRetry;
+                ProgressText = $"{ex.GetType().Name} while checking for updates - {ex.Message}";
+                if (File.Exists(gameExe)) State = GameState.clickPlay;
             }
         }
 
@@ -287,8 +293,8 @@ namespace TacticalLauncher
             }
             catch (Exception ex)
             {
-                State = GameState.failed;
-                MessageBox.Show($"Error downloading game: {ex}");
+                State = GameState.failedRetry;
+                MessageBox.Show($"Error downloading game: {ex.Message}");
             }
         }
 
@@ -335,8 +341,8 @@ namespace TacticalLauncher
             }
             catch (Exception ex)
             {
-                State = GameState.failed;
-                MessageBox.Show($"Error installing game: {ex}");
+                State = GameState.failedRetry;
+                MessageBox.Show($"Error installing game: {ex.Message}");
             }
         }
 
@@ -359,9 +365,11 @@ namespace TacticalLauncher
                     State = GameState.downloading;
                     DownloadGame();
                     break;
-                case GameState.failed:
-                    CheckUpdates();
-                    // TODO: GitHub support
+                case GameState.failedRetry:
+                    if (downloadVersionUrl == null)
+                        DownloadGame();
+                    else
+                        CheckUpdates();
                     break;
             }
         }
