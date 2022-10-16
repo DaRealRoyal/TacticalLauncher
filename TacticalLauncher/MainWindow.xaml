@@ -32,17 +32,7 @@
                     <Image Stretch="UniformToFill" Source="/images/olena-sergienko-3BlVILvh9hM-unsplash.jpg"/>
                     <TextBlock Text="Tactical Math Returns" FontSize="96" VerticalAlignment="Top" HorizontalAlignment="Center" Foreground="White" Margin="0,200,0,0"/>
                     <TextBlock VerticalAlignment="Bottom" HorizontalAlignment="Left" FontSize="20" Foreground="White" Margin="5,0,0,5"><Hyperlink NavigateUri="https://tacticalmath.games/" RequestNavigate="Hyperlink_RequestNavigate" Foreground="White">https://tacticalmath.games/</Hyperlink></TextBlock>
-                    <TextBlock Text="{Binding LocalVersion, StringFormat=v{0}, TargetNullValue=''}" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="White" Margin="0,0,5,5"/>
-                    <TextBlock Text="{Binding ProgressText}" VerticalAlignment="Bottom" HorizontalAlignment="center" FontSize="20" Foreground="White" Margin="0,0,0,160"/>
-                    <ProgressBar Minimum="0" Value="{Binding DownloadSizeCurrent}" Maximum="{Binding DownloadSize}" Height="10" Margin="0,0,0,190" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="500"/>
-                    <Button Content="{Binding StatusText}" IsEnabled="{Binding IsReadyOrFailed}" Command="{Binding PlayCommand}" FontSize="32" Margin="0,0,0,200" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="500" Padding="20,15,20,15"/>
-                </Grid>
-            </TabItem>
-            <TabItem Name="TmrGitHubTab" Header="TMR (GitHub)" FontFamily="/fonts/TacticalFont.otf#TacticalFont">
-                <Grid>
-                    <Image Stretch="UniformToFill" Source="/images/olena-sergienko-3BlVILvh9hM-unsplash.jpg"/>
-                    <TextBlock Text="Tactical Math Returns" FontSize="96" VerticalAlignment="Top" HorizontalAlignment="Center" Foreground="White" Margin="0,200,0,0"/>
-                    <TextBlock VerticalAlignment="Bottom" HorizontalAlignment="Left" FontSize="20" Foreground="White" Margin="5,0,0,5"><Hyperlink NavigateUri="https://tacticalmath.games/" RequestNavigate="Hyperlink_RequestNavigate" Foreground="White">https://tacticalmath.games/</Hyperlink></TextBlock>
+                    <TextBlock Text="{Binding OnlineVersion, StringFormat=v{0}, TargetNullValue=''}" Visibility="{Binding OnlineVersionVisibility}" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="White" Margin="0,0,5,30"/>
                     <TextBlock Text="{Binding LocalVersion, StringFormat=v{0}, TargetNullValue=''}" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="White" Margin="0,0,5,5"/>
                     <TextBlock Text="{Binding ProgressText}" VerticalAlignment="Bottom" HorizontalAlignment="center" FontSize="20" Foreground="White" Margin="0,0,0,160"/>
                     <ProgressBar Minimum="0" Value="{Binding DownloadSizeCurrent}" Maximum="{Binding DownloadSize}" Height="10" Margin="0,0,0,190" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="500"/>
