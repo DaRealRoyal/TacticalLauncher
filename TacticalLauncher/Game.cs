@@ -30,7 +30,6 @@ namespace TacticalLauncher
     class Game : INotifyPropertyChanged
     {
         static readonly string launcherPath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).ToString());
-        static readonly string settingsPath = Path.Combine(launcherPath, "settings.xml");   // TODO
         static readonly string gamesPath = Path.Combine(launcherPath, "Games");
         static readonly string downloadPath = Path.Combine(gamesPath, "Downloads");
 

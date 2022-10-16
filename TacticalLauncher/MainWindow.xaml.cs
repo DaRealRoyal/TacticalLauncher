@@ -13,12 +13,12 @@ namespace TacticalLauncher
     {
         private const string updateUrl = "https://tacticalmath.games/download";
 
-        //readonly Game tmrGDrive = new Game(
+        //readonly Game tmrGDrive = new(
         //    "https://drive.google.com/uc?export=download&id=1FJL0sBPvt5AEdbkgcKshO15Vv-kuJ6gd",
         //    "https://drive.google.com/uc?export=download&id=18FkOPeDDzqPPgmRb4XdzEHEchfM5U3HV",
         //    "TacticalMathReturns", "TacticalMathReturns.exe");
-        readonly Game tmr = new Game("DaRealRoyal", "TacticalMathReturns", "TacticalMathReturns.exe");
-        readonly Game md2 = new Game("Nalsai", "MothershipDefender2", "MothershipDefender2.exe");
+        readonly Game tmr = new("DaRealRoyal", "TacticalMathReturns", "TacticalMathReturns.exe");
+        readonly Game md2 = new("Nalsai", "MothershipDefender2", "MothershipDefender2.exe");
 
         public MainWindow()
         {
@@ -55,7 +55,7 @@ namespace TacticalLauncher
         }
 
         [SupportedOSPlatform("windows")]
-        private async void SquirrelUpdate()
+        private static async void SquirrelUpdate()
         {
             using var mgr = new UpdateManager(updateUrl);
             if (mgr.IsInstalledApp) await mgr.UpdateApp();
@@ -64,12 +64,12 @@ namespace TacticalLauncher
         private void Window_ContentRendered(object sender, EventArgs e)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                _ = Task.Run(() => SquirrelUpdate());
+                SquirrelUpdate();
         }
 
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
-            ProcessStartInfo processStartInfo = new ProcessStartInfo()
+            ProcessStartInfo processStartInfo = new()
             {
                 FileName = e.Uri.AbsoluteUri,
                 UseShellExecute = true
