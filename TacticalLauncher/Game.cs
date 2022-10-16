@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -201,7 +202,7 @@ namespace TacticalLauncher
             if (File.Exists(versionFile))
             {
                 var lastModified = File.GetLastWriteTime(versionFile);
-                Console.WriteLine(gameName + " last checked " + lastModified.ToString("yyyy-MM-dd HH:mm:ss"));
+                Trace.WriteLine(gameName + " last checked " + lastModified.ToString("yyyy-MM-dd HH:mm:ss"));
 
                 if (DateTime.Now.Subtract(lastModified) < TimeSpan.FromHours(1))
                 {
@@ -226,7 +227,7 @@ namespace TacticalLauncher
                 var latest = releases[0];
                 downloadUrl = GitHubAssetDownload(latest.Assets, gameName + "(.+)?.zip");
                 OnlineVersion = new Version(latest.TagName.TrimStart('v'));
-                Console.WriteLine("{0}/{1} {2} -> {3}", owner, repo, OnlineVersion, downloadUrl);
+                Trace.WriteLine($"{owner}/{repo} {OnlineVersion} -> {downloadUrl}");
 
                 if (File.Exists(versionFile) && File.Exists(gameExe))
                 {
@@ -253,7 +254,7 @@ namespace TacticalLauncher
             return "";
         }
 
-        public void CheckUpdates()
+        public async void CheckUpdates()
         {
             if (UpdateRateLimiter() && File.Exists(gameExe))
             {
@@ -263,9 +264,24 @@ namespace TacticalLauncher
 
             try
             {
-                WebClient webClient = new();
-                webClient.DownloadStringCompleted += new DownloadStringCompletedEventHandler(VersionCallback);
-                webClient.DownloadStringAsync(new Uri(downloadVersionUrl));
+                using HttpClient client = new();
+                HttpResponseMessage response = await client.GetAsync(downloadVersionUrl);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var contentString = await response.Content.ReadAsStringAsync();
+                    OnlineVersion = new Version(contentString.TrimStart('v'));
+                    Trace.WriteLine($"{gameName} {OnlineVersion} -> {downloadUrl}");
+
+                    if (File.Exists(versionFile) && File.Exists(gameExe))
+                        State = OnlineVersion == _localVersion ? GameState.clickPlay : GameState.clickUpdate;
+                    else
+                        State = GameState.clickInstall;
+                }
+                else
+                {
+                    throw new FileNotFoundException();
+                }
             }
             catch (Exception ex)
             {
@@ -280,7 +296,7 @@ namespace TacticalLauncher
             try
             {
                 OnlineVersion = new Version(e.Result.TrimStart('v'));
-                Console.WriteLine("{0} {1} -> {2}", gameName, OnlineVersion, downloadUrl);
+                Trace.WriteLine($"{gameName} {OnlineVersion} -> {downloadUrl}");
 
                 if (File.Exists(versionFile) && File.Exists(gameExe))
                 {
@@ -302,8 +318,6 @@ namespace TacticalLauncher
             State = GameState.downloading;
             try
             {
-                WebClient webClient = new();
-
                 Directory.CreateDirectory(downloadPath);
 
                 FileDownloader downloader = new();
