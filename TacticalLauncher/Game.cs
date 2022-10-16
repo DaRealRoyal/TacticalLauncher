@@ -33,7 +33,7 @@ namespace TacticalLauncher
         static readonly string gamesPath = Path.Combine(launcherPath, "Games");
         static readonly string downloadPath = Path.Combine(gamesPath, "Downloads");
 
-        static GitHubClient client = new GitHubClient(new ProductHeaderValue("TacticalLauncher"));
+        static readonly GitHubClient client = new(new ProductHeaderValue("TacticalLauncher"));
 
         readonly string versionFile;
         readonly string gameName;
@@ -62,26 +62,18 @@ namespace TacticalLauncher
         {
             get
             {
-                switch (_state)
+                return _state switch
                 {
-                    case GameState.start:
-                        return "Checking For Updates...";
-                    case GameState.clickPlay:
-                        return "Play";
-                    case GameState.clickUpdate:
-                        return "Update";
-                    case GameState.clickInstall:
-                        return "Install";
-                    case GameState.failedRetry:
-                        return "Failed - Retry?";
-                    case GameState.failed:
-                        return "Failed";
-                    case GameState.downloading:
-                        return "Downloading...";
-                    case GameState.installing:
-                        return "Installing...";
-                }
-                return _state.ToString();
+                    GameState.start => "Checking For Updates...",
+                    GameState.clickPlay => "Play",
+                    GameState.clickUpdate => "Update",
+                    GameState.clickInstall => "Install",
+                    GameState.failedRetry => "Failed - Retry?",
+                    GameState.failed => "Failed",
+                    GameState.downloading => "Downloading...",
+                    GameState.installing => "Installing...",
+                    _ => _state.ToString(),
+                };
             }
         }
 
@@ -201,7 +193,7 @@ namespace TacticalLauncher
             }
             gameExe = Path.Combine(gamePath, exe);
 
-            GetGitHubData(owner, name, exe);
+            GetGitHubData(owner, name);
         }
 
         public bool UpdateRateLimiter()
@@ -220,7 +212,7 @@ namespace TacticalLauncher
             return false;
         }
 
-        public async void GetGitHubData(string owner, string repo, string exe)
+        public async void GetGitHubData(string owner, string repo)
         {
             if (UpdateRateLimiter() && File.Exists(gameExe))
             {
@@ -252,7 +244,7 @@ namespace TacticalLauncher
             }
         }
 
-        public string GitHubAssetDownload(IReadOnlyList<ReleaseAsset> releaseAssets, string name)
+        public static string GitHubAssetDownload(IReadOnlyList<ReleaseAsset> releaseAssets, string name)
         {
             foreach (var asset in releaseAssets)
             {
@@ -271,7 +263,7 @@ namespace TacticalLauncher
 
             try
             {
-                WebClient webClient = new WebClient();
+                WebClient webClient = new();
                 webClient.DownloadStringCompleted += new DownloadStringCompletedEventHandler(VersionCallback);
                 webClient.DownloadStringAsync(new Uri(downloadVersionUrl));
             }
@@ -310,11 +302,11 @@ namespace TacticalLauncher
             State = GameState.downloading;
             try
             {
-                WebClient webClient = new WebClient();
+                WebClient webClient = new();
 
                 Directory.CreateDirectory(downloadPath);
 
-                FileDownloader downloader = new FileDownloader();
+                FileDownloader downloader = new();
                 downloader.DownloadProgressChanged += new FileDownloader.DownloadProgressChangedEventHandler(UpdateProgressCallback);
                 downloader.DownloadFileCompleted += new AsyncCompletedEventHandler(DownloadCompletedCallback);
                 downloader.DownloadFileAsync(downloadUrl, Path.Combine(downloadPath, gameName + "_v" + OnlineVersion + ".zip"), OnlineVersion);
@@ -375,14 +367,14 @@ namespace TacticalLauncher
         }
 
         private ICommand _playCommand;
-        public ICommand PlayCommand => _playCommand ?? (_playCommand = new CommandHandler(() => Play(), () => true));
+        public ICommand PlayCommand => _playCommand ??= new CommandHandler(() => Play(), () => true);
 
         public void Play()
         {
             switch (State)
             {
                 case GameState.clickPlay:
-                    ProcessStartInfo processStartInfo = new ProcessStartInfo()
+                    ProcessStartInfo processStartInfo = new()
                     {
                         FileName = gameExe
                     };
@@ -413,7 +405,7 @@ namespace TacticalLauncher
         static readonly string[] SizeSuffixes = { "bytes", "KiB", "MiB", "GiB", "TiB" };
         static string SizeSuffix(Int64 value, int decimalPlaces = 1)
         {
-            if (decimalPlaces < 0) { throw new ArgumentOutOfRangeException("decimalPlaces"); }
+            if (decimalPlaces < 0) { throw new ArgumentOutOfRangeException(nameof(decimalPlaces)); }
             if (value < 0) { return "-" + SizeSuffix(-value, decimalPlaces); }
             if (value == 0) { return string.Format("{0:n" + decimalPlaces + "} bytes", 0); }
 

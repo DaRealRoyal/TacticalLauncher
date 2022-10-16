@@ -5,340 +5,340 @@ using System.IO;
 using System.Net;
 using System.Text;
 
-/*
-* Source:
-* https://gist.github.com/yasirkula/d0ec0c07b138748e5feaecbd93b6223c
-*/
-
-/* EXAMPLE USAGE
-	FileDownloader fileDownloader = new FileDownloader();
-
-	// This callback is triggered for DownloadFileAsync only
-	fileDownloader.DownloadProgressChanged += ( sender, e ) => Console.WriteLine( "Progress changed " + e.BytesReceived + " " + e.TotalBytesToReceive );
-	// This callback is triggered for both DownloadFile and DownloadFileAsync
-	fileDownloader.DownloadFileCompleted += ( sender, e ) => Console.WriteLine( "Download completed" );
-
-	fileDownloader.DownloadFileAsync( "https://INSERT_DOWNLOAD_LINK_HERE", @"C:\downloadedFile.txt" );
-*/
-
-public class FileDownloader : IDisposable
+namespace TacticalLauncher
 {
 
-    private const string GOOGLE_DRIVE_DOMAIN = "drive.google.com";
-	private const string GOOGLE_DRIVE_DOMAIN2 = "https://drive.google.com";
+    /*
+    * Source:
+    * https://gist.github.com/yasirkula/d0ec0c07b138748e5feaecbd93b6223c
+    * TODO: Update to use HttpClient
+    */
+#pragma warning disable SYSLIB0014
+    /* EXAMPLE USAGE
+        FileDownloader fileDownloader = new FileDownloader();
 
-	// In the worst case, it is necessary to send 3 download requests to the Drive address
-	//   1. an NID cookie is returned instead of a download_warning cookie
-	//   2. download_warning cookie returned
-	//   3. the actual file is downloaded
-	private const int GOOGLE_DRIVE_MAX_DOWNLOAD_ATTEMPT = 3;
+        // This callback is triggered for DownloadFileAsync only
+        fileDownloader.DownloadProgressChanged += ( sender, e ) => Console.WriteLine( "Progress changed " + e.BytesReceived + " " + e.TotalBytesToReceive );
+        // This callback is triggered for both DownloadFile and DownloadFileAsync
+        fileDownloader.DownloadFileCompleted += ( sender, e ) => Console.WriteLine( "Download completed" );
 
-	public delegate void DownloadProgressChangedEventHandler( object sender, DownloadProgress progress );
+        fileDownloader.DownloadFileAsync( "https://INSERT_DOWNLOAD_LINK_HERE", @"C:\downloadedFile.txt" );
+    */
+    public class FileDownloader : IDisposable
+    {
+        private const string GOOGLE_DRIVE_DOMAIN = "drive.google.com";
+        private const string GOOGLE_DRIVE_DOMAIN2 = "https://drive.google.com";
 
-	// Custom download progress reporting (needed for Google Drive)
-	public class DownloadProgress
-	{
-		public long BytesReceived, TotalBytesToReceive;
-		public object UserState;
+        // In the worst case, it is necessary to send 3 download requests to the Drive address
+        //   1. an NID cookie is returned instead of a download_warning cookie
+        //   2. download_warning cookie returned
+        //   3. the actual file is downloaded
+        private const int GOOGLE_DRIVE_MAX_DOWNLOAD_ATTEMPT = 3;
 
-		public int ProgressPercentage
-		{
-			get
-			{
-				if( TotalBytesToReceive > 0L )
-					return (int) ( ( (double) BytesReceived / TotalBytesToReceive ) * 100 );
+        public delegate void DownloadProgressChangedEventHandler(object sender, DownloadProgress progress);
 
-				return 0;
-			}
-		}
-	}
+        // Custom download progress reporting (needed for Google Drive)
+        public class DownloadProgress
+        {
+            public long BytesReceived, TotalBytesToReceive;
+            public object UserState;
 
-	// Web client that preserves cookies (needed for Google Drive)
-	private class CookieAwareWebClient : WebClient
-	{
-		private class CookieContainer
-		{
-			private readonly Dictionary<string, string> cookies = new Dictionary<string, string>();
+            public int ProgressPercentage
+            {
+                get
+                {
+                    if (TotalBytesToReceive > 0L)
+                        return (int)((double)BytesReceived / TotalBytesToReceive * 100);
 
-			public string this[Uri address]
-			{
-				get
-				{
-					string cookie;
-					if( cookies.TryGetValue( address.Host, out cookie ) )
-						return cookie;
+                    return 0;
+                }
+            }
+        }
 
-					return null;
-				}
-				set
-				{
-					cookies[address.Host] = value;
-				}
-			}
-		}
+        // Web client that preserves cookies (needed for Google Drive)
+        private class CookieAwareWebClient : WebClient
+        {
+            private class CookieContainer
+            {
+                private readonly Dictionary<string, string> cookies = new();
 
-		private readonly CookieContainer cookies = new CookieContainer();
-		public DownloadProgress ContentRangeTarget;
+                public string this[Uri address]
+                {
+                    get
+                    {
+                        if (cookies.TryGetValue(address.Host, out string cookie))
+                            return cookie;
 
-		protected override WebRequest GetWebRequest( Uri address )
-		{
-			WebRequest request = base.GetWebRequest( address );
-			if( request is HttpWebRequest )
-			{
-				string cookie = cookies[address];
-				if( cookie != null )
-					( (HttpWebRequest) request ).Headers.Set( "cookie", cookie );
+                        return null;
+                    }
+                    set
+                    {
+                        cookies[address.Host] = value;
+                    }
+                }
+            }
 
-				if( ContentRangeTarget != null )
-					( (HttpWebRequest) request ).AddRange( 0 );
-			}
+            private readonly CookieContainer cookies = new();
+            public DownloadProgress ContentRangeTarget;
 
-			return request;
-		}
+            protected override WebRequest GetWebRequest(Uri address)
+            {
+                WebRequest request = base.GetWebRequest(address);
+                if (request is HttpWebRequest request1)
+                {
+                    string cookie = cookies[address];
+                    if (cookie != null)
+                        request1.Headers.Set("cookie", cookie);
 
-		protected override WebResponse GetWebResponse( WebRequest request, IAsyncResult result )
-		{
-			return ProcessResponse( base.GetWebResponse( request, result ) );
-		}
+                    if (ContentRangeTarget != null)
+                        request1.AddRange(0);
+                }
 
-		protected override WebResponse GetWebResponse( WebRequest request )
-		{
-			return ProcessResponse( base.GetWebResponse( request ) );
-		}
+                return request;
+            }
 
-		private WebResponse ProcessResponse( WebResponse response )
-		{
-			string[] cookies = response.Headers.GetValues( "Set-Cookie" );
-			if( cookies != null && cookies.Length > 0 )
-			{
-				int length = 0;
-				for( int i = 0; i < cookies.Length; i++ )
-					length += cookies[i].Length;
+            protected override WebResponse GetWebResponse(WebRequest request, IAsyncResult result)
+            {
+                return ProcessResponse(base.GetWebResponse(request, result));
+            }
 
-				StringBuilder cookie = new StringBuilder( length );
-				for( int i = 0; i < cookies.Length; i++ )
-					cookie.Append( cookies[i] );
+            protected override WebResponse GetWebResponse(WebRequest request)
+            {
+                return ProcessResponse(base.GetWebResponse(request));
+            }
 
-				this.cookies[response.ResponseUri] = cookie.ToString();
-			}
+            private WebResponse ProcessResponse(WebResponse response)
+            {
+                string[] cookies = response.Headers.GetValues("Set-Cookie");
+                if (cookies != null && cookies.Length > 0)
+                {
+                    int length = 0;
+                    for (int i = 0; i < cookies.Length; i++)
+                        length += cookies[i].Length;
 
-			if( ContentRangeTarget != null )
-			{
-				string[] rangeLengthHeader = response.Headers.GetValues( "Content-Range" );
-				if( rangeLengthHeader != null && rangeLengthHeader.Length > 0 )
-				{
-					int splitIndex = rangeLengthHeader[0].LastIndexOf( '/' );
-					if( splitIndex >= 0 && splitIndex < rangeLengthHeader[0].Length - 1 )
-					{
-						long length;
-						if( long.TryParse( rangeLengthHeader[0].Substring( splitIndex + 1 ), out length ) )
-							ContentRangeTarget.TotalBytesToReceive = length;
-					}
-				}
-			}
+                    StringBuilder cookie = new(length);
+                    for (int i = 0; i < cookies.Length; i++)
+                        cookie.Append(cookies[i]);
 
-			return response;
-		}
-	}
+                    this.cookies[response.ResponseUri] = cookie.ToString();
+                }
 
-	private readonly CookieAwareWebClient webClient;
-	private readonly DownloadProgress downloadProgress;
+                if (ContentRangeTarget != null)
+                {
+                    string[] rangeLengthHeader = response.Headers.GetValues("Content-Range");
+                    if (rangeLengthHeader != null && rangeLengthHeader.Length > 0)
+                    {
+                        int splitIndex = rangeLengthHeader[0].LastIndexOf('/');
+                        if (splitIndex >= 0 && splitIndex < rangeLengthHeader[0].Length - 1)
+                        {
+                            if (long.TryParse(rangeLengthHeader[0].AsSpan(splitIndex + 1), out long length))
+                                ContentRangeTarget.TotalBytesToReceive = length;
+                        }
+                    }
+                }
 
-	private Uri downloadAddress;
-	private string downloadPath;
+                return response;
+            }
+        }
 
-	private bool asyncDownload;
-	private object userToken;
+        private readonly CookieAwareWebClient webClient;
+        private readonly DownloadProgress downloadProgress;
 
-	private bool downloadingDriveFile;
-	private int driveDownloadAttempt;
+        private Uri downloadAddress;
+        private string downloadPath;
 
-	public event DownloadProgressChangedEventHandler DownloadProgressChanged;
-	public event AsyncCompletedEventHandler DownloadFileCompleted;
+        private bool asyncDownload;
+        private object userToken;
 
-	public FileDownloader()
-	{
-		webClient = new CookieAwareWebClient();
-		webClient.DownloadProgressChanged += DownloadProgressChangedCallback;
-		webClient.DownloadFileCompleted += DownloadFileCompletedCallback;
+        private bool downloadingDriveFile;
+        private int driveDownloadAttempt;
 
-		downloadProgress = new DownloadProgress();
-	}
+        public event DownloadProgressChangedEventHandler DownloadProgressChanged;
+        public event AsyncCompletedEventHandler DownloadFileCompleted;
 
-	public void DownloadFile( string address, string fileName )
-	{
-		DownloadFile( address, fileName, false, null );
-	}
+        public FileDownloader()
+        {
+            webClient = new CookieAwareWebClient();
+            webClient.DownloadProgressChanged += DownloadProgressChangedCallback;
+            webClient.DownloadFileCompleted += DownloadFileCompletedCallback;
 
-	public void DownloadFileAsync( string address, string fileName, object userToken = null )
-	{
-		DownloadFile( address, fileName, true, userToken );
-	}
+            downloadProgress = new DownloadProgress();
+        }
 
-	private void DownloadFile( string address, string fileName, bool asyncDownload, object userToken )
-	{
-		downloadingDriveFile = address.StartsWith( GOOGLE_DRIVE_DOMAIN ) || address.StartsWith( GOOGLE_DRIVE_DOMAIN2 );
-		if( downloadingDriveFile )
-		{
-			address = GetGoogleDriveDownloadAddress( address );
-			driveDownloadAttempt = 1;
+        public void DownloadFile(string address, string fileName)
+        {
+            DownloadFile(address, fileName, false, null);
+        }
 
-			webClient.ContentRangeTarget = downloadProgress;
-		}
-		else
-			webClient.ContentRangeTarget = null;
+        public void DownloadFileAsync(string address, string fileName, object userToken = null)
+        {
+            DownloadFile(address, fileName, true, userToken);
+        }
 
-		downloadAddress = new Uri( address );
-		downloadPath = fileName;
+        private void DownloadFile(string address, string fileName, bool asyncDownload, object userToken)
+        {
+            downloadingDriveFile = address.StartsWith(GOOGLE_DRIVE_DOMAIN) || address.StartsWith(GOOGLE_DRIVE_DOMAIN2);
+            if (downloadingDriveFile)
+            {
+                address = GetGoogleDriveDownloadAddress(address);
+                driveDownloadAttempt = 1;
 
-		downloadProgress.TotalBytesToReceive = -1L;
-		downloadProgress.UserState = userToken;
+                webClient.ContentRangeTarget = downloadProgress;
+            }
+            else
+                webClient.ContentRangeTarget = null;
 
-		this.asyncDownload = asyncDownload;
-		this.userToken = userToken;
+            downloadAddress = new Uri(address);
+            downloadPath = fileName;
 
-		DownloadFileInternal();
-	}
+            downloadProgress.TotalBytesToReceive = -1L;
+            downloadProgress.UserState = userToken;
 
-	private void DownloadFileInternal()
-	{
-		if( !asyncDownload )
-		{
-			webClient.DownloadFile( downloadAddress, downloadPath );
+            this.asyncDownload = asyncDownload;
+            this.userToken = userToken;
 
-			// This callback isn't triggered for synchronous downloads, manually trigger it
-			DownloadFileCompletedCallback( webClient, new AsyncCompletedEventArgs( null, false, null ) );
-		}
-		else if( userToken == null )
-			webClient.DownloadFileAsync( downloadAddress, downloadPath );
-		else
-			webClient.DownloadFileAsync( downloadAddress, downloadPath, userToken );
-	}
+            DownloadFileInternal();
+        }
 
-	private void DownloadProgressChangedCallback( object sender, DownloadProgressChangedEventArgs e )
-	{
-		if( DownloadProgressChanged != null )
-		{
-			downloadProgress.BytesReceived = e.BytesReceived;
-			if( e.TotalBytesToReceive > 0L )
-				downloadProgress.TotalBytesToReceive = e.TotalBytesToReceive;
+        private void DownloadFileInternal()
+        {
+            if (!asyncDownload)
+            {
+                webClient.DownloadFile(downloadAddress, downloadPath);
 
-			DownloadProgressChanged( this, downloadProgress );
-		}
-	}
+                // This callback isn't triggered for synchronous downloads, manually trigger it
+                DownloadFileCompletedCallback(webClient, new AsyncCompletedEventArgs(null, false, null));
+            }
+            else if (userToken == null)
+                webClient.DownloadFileAsync(downloadAddress, downloadPath);
+            else
+                webClient.DownloadFileAsync(downloadAddress, downloadPath, userToken);
+        }
 
-	private void DownloadFileCompletedCallback( object sender, AsyncCompletedEventArgs e )
-	{
-		if( !downloadingDriveFile )
-		{
-			if( DownloadFileCompleted != null )
-				DownloadFileCompleted( this, e );
-		}
-		else
-		{
-			if( driveDownloadAttempt < GOOGLE_DRIVE_MAX_DOWNLOAD_ATTEMPT && !ProcessDriveDownload() )
-			{
-				// Try downloading the Drive file again
-				driveDownloadAttempt++;
-				DownloadFileInternal();
-			}
-			else if( DownloadFileCompleted != null )
-				DownloadFileCompleted( this, e );
-		}
-	}
+        private void DownloadProgressChangedCallback(object sender, DownloadProgressChangedEventArgs e)
+        {
+            if (DownloadProgressChanged != null)
+            {
+                downloadProgress.BytesReceived = e.BytesReceived;
+                if (e.TotalBytesToReceive > 0L)
+                    downloadProgress.TotalBytesToReceive = e.TotalBytesToReceive;
 
-	// Downloading large files from Google Drive prompts a warning screen and requires manual confirmation
-	// Consider that case and try to confirm the download automatically if warning prompt occurs
-	// Returns true, if no more download requests are necessary
-	private bool ProcessDriveDownload()
-	{
-		FileInfo downloadedFile = new FileInfo( downloadPath );
-		if( downloadedFile == null )
-			return true;
+                DownloadProgressChanged(this, downloadProgress);
+            }
+        }
 
-		// Confirmation page is around 50KB, shouldn't be larger than 60KB
-		if( downloadedFile.Length > 60000L )
-			return true;
+        private void DownloadFileCompletedCallback(object sender, AsyncCompletedEventArgs e)
+        {
+            if (!downloadingDriveFile)
+            {
+                DownloadFileCompleted?.Invoke(this, e);
+            }
+            else
+            {
+                if (driveDownloadAttempt < GOOGLE_DRIVE_MAX_DOWNLOAD_ATTEMPT && !ProcessDriveDownload())
+                {
+                    // Try downloading the Drive file again
+                    driveDownloadAttempt++;
+                    DownloadFileInternal();
+                }
+                else DownloadFileCompleted?.Invoke(this, e);
+            }
+        }
 
-		// Downloaded file might be the confirmation page, check it
-		string content;
-		using( var reader = downloadedFile.OpenText() )
-		{
-			// Confirmation page starts with <!DOCTYPE html>, which can be preceeded by a newline
-			char[] header = new char[20];
-			int readCount = reader.ReadBlock( header, 0, 20 );
-			if( readCount < 20 || !( new string( header ).Contains( "<!DOCTYPE html>" ) ) )
-				return true;
+        // Downloading large files from Google Drive prompts a warning screen and requires manual confirmation
+        // Consider that case and try to confirm the download automatically if warning prompt occurs
+        // Returns true, if no more download requests are necessary
+        private bool ProcessDriveDownload()
+        {
+            FileInfo downloadedFile = new(downloadPath);
+            if (downloadedFile == null)
+                return true;
 
-			content = reader.ReadToEnd();
-		}
+            // Confirmation page is around 50KB, shouldn't be larger than 60KB
+            if (downloadedFile.Length > 60000L)
+                return true;
 
-		int linkIndex = content.LastIndexOf( "href=\"/uc?" );
-		if( linkIndex >= 0 )
-		{
-			linkIndex += 6;
-			int linkEnd = content.IndexOf( '"', linkIndex );
-			if( linkEnd >= 0 )
-			{
-				downloadAddress = new Uri( "https://drive.google.com" + content.Substring( linkIndex, linkEnd - linkIndex ).Replace( "&amp;", "&" ) );
-				return false;
-			}
-		}
+            // Downloaded file might be the confirmation page, check it
+            string content;
+            using (var reader = downloadedFile.OpenText())
+            {
+                // Confirmation page starts with <!DOCTYPE html>, which can be preceeded by a newline
+                char[] header = new char[20];
+                int readCount = reader.ReadBlock(header, 0, 20);
+                if (readCount < 20 || !new string(header).Contains("<!DOCTYPE html>"))
+                    return true;
 
-		return true;
-	}
+                content = reader.ReadToEnd();
+            }
 
-	// Handles the following formats (links can be preceeded by https://):
-	// - drive.google.com/open?id=FILEID&resourcekey=RESOURCEKEY
-	// - drive.google.com/file/d/FILEID/view?usp=sharing&resourcekey=RESOURCEKEY
-	// - drive.google.com/uc?id=FILEID&export=download&resourcekey=RESOURCEKEY
-	private string GetGoogleDriveDownloadAddress( string address )
-	{
-		int index = address.IndexOf( "id=" );
-		int closingIndex;
-		if( index > 0 )
-		{
-			index += 3;
-			closingIndex = address.IndexOf( '&', index );
-			if( closingIndex < 0 )
-				closingIndex = address.Length;
-		}
-		else
-		{
-			index = address.IndexOf( "file/d/" );
-			if( index < 0 ) // address is not in any of the supported forms
-				return string.Empty;
+            int linkIndex = content.LastIndexOf("href=\"/uc?");
+            if (linkIndex >= 0)
+            {
+                linkIndex += 6;
+                int linkEnd = content.IndexOf('"', linkIndex);
+                if (linkEnd >= 0)
+                {
+                    downloadAddress = new Uri("https://drive.google.com" + content[linkIndex..linkEnd].Replace("&amp;", "&"));
+                    return false;
+                }
+            }
 
-			index += 7;
+            return true;
+        }
 
-			closingIndex = address.IndexOf( '/', index );
-			if( closingIndex < 0 )
-			{
-				closingIndex = address.IndexOf( '?', index );
-				if( closingIndex < 0 )
-					closingIndex = address.Length;
-			}
-		}
+        // Handles the following formats (links can be preceeded by https://):
+        // - drive.google.com/open?id=FILEID&resourcekey=RESOURCEKEY
+        // - drive.google.com/file/d/FILEID/view?usp=sharing&resourcekey=RESOURCEKEY
+        // - drive.google.com/uc?id=FILEID&export=download&resourcekey=RESOURCEKEY
+        private static string GetGoogleDriveDownloadAddress(string address)
+        {
+            int index = address.IndexOf("id=");
+            int closingIndex;
+            if (index > 0)
+            {
+                index += 3;
+                closingIndex = address.IndexOf('&', index);
+                if (closingIndex < 0)
+                    closingIndex = address.Length;
+            }
+            else
+            {
+                index = address.IndexOf("file/d/");
+                if (index < 0) // address is not in any of the supported forms
+                    return string.Empty;
 
-		string fileID = address.Substring( index, closingIndex - index );
+                index += 7;
 
-		index = address.IndexOf( "resourcekey=" );
-		if( index > 0 )
-		{
-			index += 12;
-			closingIndex = address.IndexOf( '&', index );
-			if( closingIndex < 0 )
-				closingIndex = address.Length;
+                closingIndex = address.IndexOf('/', index);
+                if (closingIndex < 0)
+                {
+                    closingIndex = address.IndexOf('?', index);
+                    if (closingIndex < 0)
+                        closingIndex = address.Length;
+                }
+            }
 
-			string resourceKey = address.Substring( index, closingIndex - index );
-			return string.Concat( "https://drive.google.com/uc?id=", fileID, "&export=download&resourcekey=", resourceKey, "&confirm=t" );
-		}
-		else
-			return string.Concat( "https://drive.google.com/uc?id=", fileID, "&export=download&confirm=t" );
-	}
+            string fileID = address[index..closingIndex];
 
-	public void Dispose()
-	{
-		webClient.Dispose();
-	}
+            index = address.IndexOf("resourcekey=");
+            if (index > 0)
+            {
+                index += 12;
+                closingIndex = address.IndexOf('&', index);
+                if (closingIndex < 0)
+                    closingIndex = address.Length;
+
+                string resourceKey = address[index..closingIndex];
+                return string.Concat("https://drive.google.com/uc?id=", fileID, "&export=download&resourcekey=", resourceKey, "&confirm=t");
+            }
+            else
+                return string.Concat("https://drive.google.com/uc?id=", fileID, "&export=download&confirm=t");
+        }
+
+        public void Dispose()
+        {
+            webClient.Dispose();
+            GC.SuppressFinalize(this);
+        }
+    }
 }
