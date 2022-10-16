@@ -33,7 +33,7 @@ namespace TacticalLauncher
         static readonly string gamesPath = Path.Combine(launcherPath, "Games");
         static readonly string downloadPath = Path.Combine(gamesPath, "Downloads");
 
-        GitHubClient client = new GitHubClient(new ProductHeaderValue("TacticalLauncher"));
+        static GitHubClient client = new GitHubClient(new ProductHeaderValue("TacticalLauncher"));
 
         readonly string versionFile;
         readonly string gameName;
@@ -204,8 +204,27 @@ namespace TacticalLauncher
             GetGitHubData(owner, name, exe);
         }
 
+        public bool UpdateRateLimiter()
+        {
+            var lastModified = File.GetLastWriteTime(versionFile);
+            Console.WriteLine(gameName + " last checked " + lastModified.ToString("yyyy-MM-dd HH:mm:ss"));
+
+            if (DateTime.Now.Subtract(lastModified) > TimeSpan.FromHours(1))
+            {
+                File.SetLastWriteTime(versionFile, DateTime.Now);
+                return false;
+            }
+            return true;
+        }
+
         public async void GetGitHubData(string owner, string repo, string exe)
         {
+            if (UpdateRateLimiter() && File.Exists(gameExe))
+            {
+                State = GameState.clickPlay;
+                return;
+            }
+
             try
             {
                 var releases = await client.Repository.Release.GetAll(owner, repo);
@@ -241,6 +260,12 @@ namespace TacticalLauncher
 
         public void CheckUpdates()
         {
+            if (UpdateRateLimiter() && File.Exists(gameExe))
+            {
+                State = GameState.clickPlay;
+                return;
+            }
+
             try
             {
                 WebClient webClient = new WebClient();
