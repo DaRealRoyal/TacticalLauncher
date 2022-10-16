@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="images\icon.ico" />
+    <Resource Include="images\mothership.png" />
     <Resource Include="images\olena-sergienko-3BlVILvh9hM-unsplash.jpg" />
   </ItemGroup>
   <ItemGroup>

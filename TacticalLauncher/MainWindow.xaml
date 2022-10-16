@@ -40,6 +40,16 @@
                 </Grid>
             </TabItem>
             <TabItem Name="MD2Tab" Header="Mothership Defender 2">
+                <Grid>
+                    <Image Source="/images/mothership.png" Margin="271,145,0,0" Height="175" VerticalAlignment="Top" HorizontalAlignment="Left" Width="175"/>
+                    <TextBlock Text="Tactical Math Returns" FontSize="48" VerticalAlignment="Top" Foreground="Black" Margin="476,195,0,0" HorizontalAlignment="Left" Width="450"/>
+                    <TextBlock VerticalAlignment="Bottom" HorizontalAlignment="Left" FontSize="20" Foreground="Black" Margin="5,0,0,5"><Hyperlink NavigateUri="https://nalsai.de/mothershipdefender2/" RequestNavigate="Hyperlink_RequestNavigate" Foreground="Black">https://nalsai.de/mothershipdefender2/</Hyperlink></TextBlock>
+                    <TextBlock Text="{Binding OnlineVersion, StringFormat=v{0}, TargetNullValue=''}" Visibility="{Binding OnlineVersionVisibility}" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="Black" Margin="0,0,5,30"/>
+                    <TextBlock Text="{Binding LocalVersion, StringFormat=v{0}, TargetNullValue=''}" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="Black" Margin="0,0,5,5"/>
+                    <TextBlock Text="{Binding ProgressText}" VerticalAlignment="Bottom" HorizontalAlignment="center" FontSize="20" Foreground="Black" Margin="0,0,0,160"/>
+                    <ProgressBar Minimum="0" Value="{Binding DownloadSizeCurrent}" Maximum="{Binding DownloadSize}" Height="10" Margin="0,0,0,190" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="500"/>
+                    <Button Content="{Binding StatusText}" IsEnabled="{Binding IsReadyOrFailed}" Command="{Binding PlayCommand}" FontSize="32" Margin="0,0,0,200" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="500" Padding="20,15,20,15"/>
+                </Grid>
             </TabItem>
             <TabItem Header="Settings">
                 <Grid>
