@@ -29,9 +29,149 @@ namespace TacticalLauncher
 
     class Game : INotifyPropertyChanged
     {
-        static readonly string launcherPath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).ToString());
-        static readonly string gamesPath = Path.Combine(launcherPath, "Games");
-        static readonly string downloadPath = Path.Combine(gamesPath, "Downloads");
+        public static readonly string LauncherPath = Directory.GetParent(Directory.GetCurrentDirectory()).ToString();  // TODO: display in settings
+
+        public static string GamesPath  // TODO: textbox in settings, reset button, show in explorer button
+        {
+            get
+            {
+                return Properties.Settings.Default.gamesPath.Replace("%LauncherPath%", LauncherPath, StringComparison.InvariantCultureIgnoreCase);
+            }
+            set
+            {
+                // TODO: don't change while busy
+
+                if (String.IsNullOrEmpty(value))
+                {
+                    Properties.Settings.Default.gamesPath = @"%LauncherPath%\Games";
+                    return;
+                }
+
+                // check whether path works
+                try
+                {
+                    Directory.CreateDirectory(value);
+                    using (FileStream fs = File.Create(
+                        Path.Combine(value, Path.GetRandomFileName()),
+                        1, FileOptions.DeleteOnClose)
+                    ) { }
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Can't write to directory {value}: {ex.Message}\nKeeping the old path.");
+                    return;
+                }
+
+                DialogResult dr = MessageBox.Show("Move files to new path?", MessageBoxButtons.YesNo);
+                switch (dr)
+                {
+                    case DialogResult.Yes:
+                        foreach (var file in new DirectoryInfo(Properties.Settings.Default.gamesPath).GetFiles())
+                        {
+                            file.MoveTo($@"{value}\{file.Name}");
+                        }
+                        break;
+                    case DialogResult.No:
+                        break;
+                }
+
+                Properties.Settings.Default.gamesPath = value;
+
+                // reset DownloadPath if moving from DownloadPath to GamesPath doesn't work
+                var testPathDownloads = Path.Combine(DownloadPath, Path.GetRandomFileName());
+                var testPathGames = Path.Combine(GamesPath, Path.GetRandomFileName());
+                try
+                {
+                    using (FileStream fs = File.Create(testPathDownloads, 1)) { }
+                    File.Move(testPathDownloads, testPathGames);
+                    File.Delete(testPathGames);
+                }
+                catch
+                {
+                    // if the move wasn't successfull, the test file needs to be deleted
+                    File.Delete(testPathDownloads);
+
+                    DownloadPath = "";
+                }
+
+                Properties.Settings.Default.Save();
+                RaisePropertyChanged();
+            }
+        }
+
+        public static string DownloadPath  // TODO: textbox in settings, reset button, show in explorer button
+        {
+            get
+            {
+                return Properties.Settings.Default.downloadPath.Replace("%GamesPath%", GamesPath, StringComparison.InvariantCultureIgnoreCase);
+            }
+            set
+            {
+                // TODO: don't change while busy
+
+                if (String.IsNullOrEmpty(value))
+                {
+                    Properties.Settings.Default.downloadPath = @"%GamesPath%\Downloads";
+                    return;
+                }
+
+                // check whether path works and moving to GamesPath is possible
+                try
+                {
+                    Directory.CreateDirectory(value);
+                    var testPathDownloads = Path.Combine(value, Path.GetRandomFileName());
+                    var testPathGames = Path.Combine(GamesPath, Path.GetRandomFileName());
+                    using (FileStream fs = File.Create(testPathDownloads, 1)) { }
+                    File.Move(testPathDownloads, testPathGames);
+                    File.Delete(testPathGames);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Either can't write to directory {value} or can't move files from there to the GamesPath: {ex.Message}\nKeeping the old path.");
+                    return;
+                }
+
+                DialogResult dr = MessageBox.Show("Delete directory at old path?", MessageBoxButtons.YesNo);
+                switch (dr)
+                {
+                    case DialogResult.Yes:
+                        Directory.Delete(Properties.Settings.Default.downloadPath, true);
+                        break;
+                    case DialogResult.No:
+                        break;
+                }
+
+                Properties.Settings.Default.downloadPath = value;
+                Properties.Settings.Default.Save();
+                RaisePropertyChanged();
+            }
+        }
+
+        public static string KeepDownloads  // TODO: checkbox in settings
+        {
+            get { return Properties.Settings.Default.keepDownloads; }
+            set
+            {
+                Properties.Settings.Default.keepDownloads = value;
+                // TODO: delete files if changed from checked to unchecked
+                Properties.Settings.Default.Save();
+                RaisePropertyChanged();
+            }
+        }
+
+        public static string GetConfigPath(ConfigurationUserLevel userLevel = ConfigurationUserLevel.PerUserRoamingAndLocal) // TODO: display in settings
+        {
+            try
+            {
+                var UserConfig = ConfigurationManager.OpenExeConfiguration(userLevel);
+                return UserConfig.FilePath;
+            }
+            catch (ConfigurationException e)
+            {
+                return e.Filename;
+            }
+        }
 
         static readonly GitHubClient client = new(new ProductHeaderValue("TacticalLauncher"));
 
@@ -159,8 +299,8 @@ namespace TacticalLauncher
         {
             gameName = name;
             gameExeName = exe;
-            gamePath = Path.Combine(gamesPath, gameName);
-            versionFile = Path.Combine(gamesPath, gameName + "-version.txt");
+            gamePath = Path.Combine(GamesPath, gameName);
+            versionFile = Path.Combine(GamesPath, gameName + "-version.txt");
             if (File.Exists(versionFile)) LocalVersion = new Version(File.ReadAllText(versionFile)); // TODO is if check needed?
             if (!Directory.Exists(gamePath))
             {
@@ -182,8 +322,8 @@ namespace TacticalLauncher
         {
             gameName = name;
             gameExeName = exe;
-            gamePath = Path.Combine(gamesPath, gameName);
-            versionFile = Path.Combine(gamesPath, gameName + "-version.txt");
+            gamePath = Path.Combine(GamesPath, gameName);
+            versionFile = Path.Combine(GamesPath, gameName + "-version.txt");
             if (File.Exists(versionFile)) LocalVersion = new Version(File.ReadAllText(versionFile)); // TODO is if check needed?
             if (!Directory.Exists(gamePath))
             {
@@ -317,12 +457,12 @@ namespace TacticalLauncher
             State = GameState.downloading;
             try
             {
-                Directory.CreateDirectory(downloadPath);
+                Directory.CreateDirectory(DownloadPath);
 
                 FileDownloader downloader = new();
                 downloader.DownloadProgressChanged += new FileDownloader.DownloadProgressChangedEventHandler(UpdateProgressCallback);
                 downloader.DownloadFileCompleted += new AsyncCompletedEventHandler(DownloadCompletedCallback);
-                downloader.DownloadFileAsync(downloadUrl, Path.Combine(downloadPath, gameName + "_v" + OnlineVersion + ".zip"), OnlineVersion);
+                downloader.DownloadFileAsync(downloadUrl, Path.Combine(DownloadPath, gameName + "_v" + OnlineVersion + ".zip"), OnlineVersion);
             }
             catch (Exception ex)
             {
@@ -353,11 +493,11 @@ namespace TacticalLauncher
 
             try
             {
-                string zipPath = Path.Combine(downloadPath, gameName + "_v" + version + ".zip");
+                string zipPath = Path.Combine(DownloadPath, gameName + "_v" + version + ".zip");
 
                 if (Directory.Exists(gamePath)) Directory.Delete(gamePath, true);
-                await Task.Run(() => ZipFile.ExtractToDirectory(zipPath, gamesPath));
-                File.Delete(zipPath);
+                await Task.Run(() => ZipFile.ExtractToDirectory(zipPath, GamesPath));
+                if (!KeepDownloads) File.Delete(zipPath);
 
                 File.WriteAllText(versionFile, version.ToString());
                 LocalVersion = version;
