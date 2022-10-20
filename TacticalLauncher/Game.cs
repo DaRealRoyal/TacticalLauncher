@@ -39,7 +39,10 @@ namespace TacticalLauncher
             }
             set
             {
-                // TODO: don't change while busy
+                // TODO: don't change while busy,
+                //       check whether any game is running and close it and/or cancel the change to prevent unnecessary problems,
+                //       prevent interactions with games while changing setting (especially while moving games) (lock window and show progress bar?),
+                //       handle problems while moving (don't crash, show message box with retry button, detect and handle incomplete move)
 
                 if (String.IsNullOrEmpty(value))
                 {
@@ -67,10 +70,8 @@ namespace TacticalLauncher
                 switch (dr)
                 {
                     case DialogResult.Yes:
-                        foreach (var file in new DirectoryInfo(Properties.Settings.Default.gamesPath).GetFiles())
-                        {
-                            file.MoveTo($@"{value}\{file.Name}");
-                        }
+                        // TODO: move files or copy and delete if on different volumes
+                        // https://stackoverflow.com/questions/3911595/move-all-files-in-subfolders-to-another-folder
                         break;
                     case DialogResult.No:
                         break;
@@ -95,6 +96,9 @@ namespace TacticalLauncher
                     DownloadPath = "";
                 }
 
+                // TODO: update game states
+                //       (an easy way is to restart the application, but I would prefer a seamless experience)
+
                 Properties.Settings.Default.Save();
                 RaisePropertyChanged();
             }
@@ -108,7 +112,7 @@ namespace TacticalLauncher
             }
             set
             {
-                // TODO: don't change while busy
+                // TODO: don't change while downloading or installing
 
                 if (String.IsNullOrEmpty(value))
                 {
