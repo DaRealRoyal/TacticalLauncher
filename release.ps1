@@ -12,5 +12,4 @@ New-Item -ItemType Directory -Force -Path  Releases
 Squirrel http-down --url "https://tacticalmath.games/download"
 
 # build new version and delta updates
-Squirrel pack --framework net6 --packId "TacticalLauncher" --packVersion "1.2.0" --packAuthors "Da Real Royal" --packDir ".\publish" --icon ".\TacticalLauncher\images\icon.ico"
-# --splashImage "install.gif"
+Squirrel pack --framework net6 --packId "TacticalLauncher" --packVersion "1.2.0" --packAuthors "Da Real Royal" --packDir ".\publish" --icon ".\TacticalLauncher\images\icon.ico" --splashImage "spinner.gif"
