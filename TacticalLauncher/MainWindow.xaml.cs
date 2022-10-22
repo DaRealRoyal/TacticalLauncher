@@ -3,7 +3,6 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Navigation;
 
@@ -12,13 +11,14 @@ namespace TacticalLauncher
     public partial class MainWindow : Window
     {
         private const string updateUrl = "https://tacticalmath.games/download";
+        static readonly SettingsController settings = new();
 
         //readonly Game tmrGDrive = new(
         //    "https://drive.google.com/uc?export=download&id=1FJL0sBPvt5AEdbkgcKshO15Vv-kuJ6gd",
         //    "https://drive.google.com/uc?export=download&id=18FkOPeDDzqPPgmRb4XdzEHEchfM5U3HV",
-        //    "TacticalMathReturns", "TacticalMathReturns.exe");
-        readonly Game tmr = new("DaRealRoyal", "TacticalMathReturns", "TacticalMathReturns.exe");
-        readonly Game md2 = new("Nalsai", "MothershipDefender2", "MothershipDefender2.exe");
+        //    "TacticalMathReturns", "TacticalMathReturns.exe", settings);
+        readonly Game tmr = new("DaRealRoyal", "TacticalMathReturns", "TacticalMathReturns.exe", settings);
+        readonly Game md2 = new("Nalsai", "MothershipDefender2", "MothershipDefender2.exe", settings);
 
         public MainWindow()
         {
@@ -34,25 +34,20 @@ namespace TacticalLauncher
             //TmrTab.DataContext = tmrGDrive;
             TmrTab.DataContext = tmr;
             MD2Tab.DataContext = md2;
+            SettingsTab.DataContext = settings;
         }
 
         [SupportedOSPlatform("windows")]
         private static void OnAppInstall(SemanticVersion version, IAppTools tools)
-        {
-            tools.CreateShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
-        }
+            => tools.CreateShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
 
         [SupportedOSPlatform("windows")]
         private static void OnAppUninstall(SemanticVersion version, IAppTools tools)
-        {
-            tools.RemoveShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
-        }
+            => tools.RemoveShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
 
         [SupportedOSPlatform("windows")]
         private static void OnAppRun(SemanticVersion version, IAppTools tools, bool firstRun)
-        {
-            tools.SetProcessAppUserModelId();
-        }
+            => tools.SetProcessAppUserModelId();
 
         [SupportedOSPlatform("windows")]
         private static async void SquirrelUpdate()

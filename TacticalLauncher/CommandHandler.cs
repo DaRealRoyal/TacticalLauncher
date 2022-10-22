@@ -1,43 +1,46 @@
 ﻿using System;
 using System.Windows.Input;
 
-public class CommandHandler : ICommand
+namespace TacticalLauncher
 {
-    private Action _action;
-    private Func<bool> _canExecute;
-
-    /// <summary>
-    /// Creates instance of the command handler
-    /// </summary>
-    /// <param name="action">Action to be executed by the command</param>
-    /// <param name="canExecute">A bolean property to containing current permissions to execute the command</param>
-    public CommandHandler(Action action, Func<bool> canExecute)
+    public class CommandHandler : ICommand
     {
-        _action = action;
-        _canExecute = canExecute;
-    }
+        private readonly Action<object> _action;
+        private Func<bool> _canExecute;
 
-    /// <summary>
-    /// Wires CanExecuteChanged event 
-    /// </summary>
-    public event EventHandler CanExecuteChanged
-    {
-        add { CommandManager.RequerySuggested += value; }
-        remove { CommandManager.RequerySuggested -= value; }
-    }
+        /// <summary>
+        /// Creates instance of the command handler
+        /// </summary>
+        /// <param name="action">Action to be executed by the command</param>
+        /// <param name="canExecute">A bolean property to containing current permissions to execute the command</param>
+        public CommandHandler(Action<object> action, Func<bool> canExecute)
+        {
+            _action = action;
+            _canExecute = canExecute;
+        }
 
-    /// <summary>
-    /// Forces checking if execute is allowed
-    /// </summary>
-    /// <param name="parameter"></param>
-    /// <returns></returns>
-    public bool CanExecute(object parameter)
-    {
-        return _canExecute.Invoke();
-    }
+        /// <summary>
+        /// Wires CanExecuteChanged event 
+        /// </summary>
+        public event EventHandler CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
 
-    public void Execute(object parameter)
-    {
-        _action();
+        /// <summary>
+        /// Forces checking if execute is allowed
+        /// </summary>
+        /// <param name="parameter"></param>
+        /// <returns></returns>
+        public bool CanExecute(object parameter)
+        {
+            return _canExecute.Invoke();
+        }
+
+        public void Execute(object parameter)
+        {
+            _action(parameter);
+        }
     }
 }
