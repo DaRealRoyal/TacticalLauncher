@@ -102,13 +102,13 @@ namespace TacticalLauncher
                 try
                 {
                     Directory.CreateDirectory(DownloadPath);
-                    using FileStream fs = File.Create(testPathDownloads, 1);
+                    File.Create(testPathDownloads).Dispose();
                     File.Move(testPathDownloads, testPathGames);
                     File.Delete(testPathGames);
                 }
                 catch
                 {
-                    // if the move wasn't successfull, the test file needs to be deleted
+                    // if the move wasn't successful, the test file needs to be deleted
                     File.Delete(testPathDownloads);
 
                     DownloadPath = @"%GamesPath%\Downloads";
