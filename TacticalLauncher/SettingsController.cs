@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Ookii.Dialogs.Wpf;
+using System;
 using System.ComponentModel;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 
@@ -22,7 +24,33 @@ namespace TacticalLauncher
         {
             get
             {
-                return _selectCommand ??= new CommandHandler((x) => StartExplorer(x), () => true);  // TODO: start explorer folder selector
+                return _selectCommand ??= new CommandHandler((x) => StartFolderBrowser(x), () => true);
+            }
+        }
+
+        public void StartFolderBrowser(object path)
+        {
+            // needs at least windows 7
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
+                (Environment.OSVersion.Version.Major != 6 || Environment.OSVersion.Version.Minor <= 0) &&
+                Environment.OSVersion.Version.Major <= 6)
+            {
+                MessageBox.Show($"Sorry, the folder browser dialog is currently not supported on your platform.");
+                return;
+            }
+
+            VistaFolderBrowserDialog ookiiDialog = new();
+            if (ookiiDialog.ShowDialog() == true)
+            {
+                switch (path)
+                {
+                    case "GamesPath":
+                        GamesPath = ookiiDialog.SelectedPath;
+                        break;
+                    case "DownloadPath":
+                        DownloadPath = ookiiDialog.SelectedPath;
+                        break;
+                }
             }
         }
 
@@ -176,7 +204,7 @@ namespace TacticalLauncher
             set
             {
                 // delete files if changed from checked to unchecked
-                if (Properties.Settings.Default.keepDownloads && !value)
+                if (Properties.Settings.Default.keepDownloads && !value && Directory.Exists(DownloadPath))
                 {
                     MessageBoxResult result = MessageBox.Show("Clean downloads directory?", "Keep Downloads", MessageBoxButton.YesNo);
                     switch (result)
