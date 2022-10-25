@@ -92,16 +92,18 @@ namespace TacticalLauncher
             get => Properties.Settings.Default.downloadPath.Replace("%LauncherPath%", LauncherPath, StringComparison.InvariantCultureIgnoreCase);
             set
             {
-                // TODO: don't change while busy,
-                //       check whether any game is running and close it and/or cancel the change to prevent unnecessary problems,
-                //       prevent interactions with games while changing setting (especially while moving games) (lock window and show progress bar?),
-                //       handle problems while moving (don't crash, show message box with retry button, detect and handle incomplete move)
                 var value_replaced = value.Replace("%LauncherPath%", LauncherPath, StringComparison.InvariantCultureIgnoreCase);
 
                 // check whether path works
                 try
                 {
                     Directory.CreateDirectory(value_replaced);
+
+                    // check if target is not empty and prompt for confirmation
+                    if (Directory.EnumerateFileSystemEntries(value_replaced).Any() &&
+                        MessageBox.Show("The selected path is not empty.\nDo you really want to continue?", "Moving Games", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                        return;
+
                     using FileStream fs = File.Create(
                         Path.Combine(value_replaced, Path.GetRandomFileName()),
                         1, FileOptions.DeleteOnClose);
@@ -112,13 +114,40 @@ namespace TacticalLauncher
                     return;
                 }
 
-                if (!Equals(GamesPath, value_replaced))
+                // move files
+                if (!Equals(GamesPath, value_replaced) &&
+                    MessageBox.Show("Move files to new path?", "Moving Games", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
-                    MessageBoxResult result = MessageBox.Show("Move files to new path?", "Moving Games", MessageBoxButton.YesNo);
-                    if (result == MessageBoxResult.Yes)
+				    if (MessageBox.Show("Please make sure all games are closed and no download or install is in progress.", "Moving Games", MessageBoxButton.OKCancel, MessageBoxImage.Warning) != MessageBoxResult.Ok)
+					    return;
+
+				    // TODO: disable all buttons and inputs
+				    //       https://social.msdn.microsoft.com/Forums/en-US/481935ac-3e89-40c2-be5a-c560ed7e705c/need-to-disable-all-controls-on-window-xaml-from-code-behind
+			        // TODO: progress bar/text
+
+                    // copy files over
+                    try
                     {
-                        // TODO: move files or copy and delete if on different volumes
-                        // https://stackoverflow.com/questions/3911595/move-all-files-in-subfolders-to-another-folder
+                        CopyDirectory(GamesPath, value_replaced, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Couldn't copy files: {ex.Message}\nKeeping the old path.");
+                        
+                        // delete incomplete copy
+                        try { Directory.CreateDirectory(value_replaced, true); } catch { }
+
+                        return;
+                    }
+
+                    // delete old files
+                    try
+                    {
+                        Directory.Delete(GamesPath, true); 
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Couldn't fully delete old files: {ex.Message}\nThere may be files left at the old path.");
                     }
                 }
 
@@ -142,12 +171,49 @@ namespace TacticalLauncher
                     DownloadPath = @"%GamesPath%\Downloads";
                 }
 
-                // TODO: update game states
-                //       (an easy way is to restart the application, but I would prefer a seamless experience)
-
                 Properties.Settings.Default.Save();
                 RaisePropertyChanged();
                 RaisePropertyChanged(nameof(RawGamesPath));
+
+                // restart launcher to update game states
+                if (MessageBox.Show("Successfully moved games, restarting launcher.", "Done Moving Games", MessageBoxButton.Ok) == MessageBoxResult.Ok)
+                {
+                    System.Diagnostics.Process.Start(Application.ResourceAssembly.Location);
+                    Application.Current.Shutdown();
+                }
+            }
+        }
+        
+        static void CopyDirectory(string sourceDir, string destinationDir, bool recursive)
+        {
+            // Get information about the source directory
+            var dir = new DirectoryInfo(sourceDir);
+
+            // Check if the source directory exists
+            if (!dir.Exists)
+                throw new DirectoryNotFoundException($"Source directory not found: {dir.FullName}");
+
+            // Cache directories before we start copying
+            DirectoryInfo[] dirs = dir.GetDirectories();
+
+            // Create the destination directory
+            Directory.CreateDirectory(destinationDir);
+
+            // Get the files in the source directory and copy to the destination directory
+            foreach (FileInfo file in dir.GetFiles())
+            {
+                string targetFilePath = Path.Combine(destinationDir, file.Name);
+                file.CopyTo(targetFilePath);
+            }
+
+            // If recursive and copying subdirectories, recursively call this method
+            if (recursive)
+            {
+                foreach (DirectoryInfo subDir in dirs)
+                {
+                    string newDestinationDir = Path.Combine(destinationDir, subDir.Name);
+                    CopyDirectory(subDir.FullName, newDestinationDir, true);
+                }
             }
         }
 
@@ -164,7 +230,9 @@ namespace TacticalLauncher
                     .Replace("%LauncherPath%", LauncherPath, StringComparison.InvariantCultureIgnoreCase);
             set
             {
-                // TODO: don't change while downloading or installing
+                if (MessageBox.Show("Please make sure no download or install is in progress.", "Moving Downloads", MessageBoxButton.OKCancel, MessageBoxImage.Warning) != MessageBoxResult.Ok)
+                    return;
+
                 var value_replaced = value
                     .Replace("%GamesPath%", GamesPath, StringComparison.InvariantCultureIgnoreCase)
                     .Replace("%LauncherPath%", LauncherPath, StringComparison.InvariantCultureIgnoreCase);
@@ -185,10 +253,10 @@ namespace TacticalLauncher
                     return;
                 }
 
-                if (!Equals(DownloadPath, value_replaced))
+                if (!Equals(DownloadPath, value_replaced) &&
+                    MessageBox.Show("Delete old downloads directory?", "Moving Downloads", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
-                    MessageBoxResult result = MessageBox.Show("Delete old downloads directory?", "Moving Downloads", MessageBoxButton.YesNo);
-                    if (result == MessageBoxResult.Yes) Directory.Delete(DownloadPath, true);
+                    Directory.Delete(DownloadPath, true);
                 }
 
                 Properties.Settings.Default.gamesPath = value;
@@ -204,16 +272,11 @@ namespace TacticalLauncher
             set
             {
                 // delete files if changed from checked to unchecked
-                if (Properties.Settings.Default.keepDownloads && !value && Directory.Exists(DownloadPath))
+                if (Properties.Settings.Default.keepDownloads && !value && Directory.Exists(DownloadPath) &&
+                    MessageBox.Show("Clean downloads directory?", "Keep Downloads", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
-                    MessageBoxResult result = MessageBox.Show("Clean downloads directory?", "Keep Downloads", MessageBoxButton.YesNo);
-                    switch (result)
-                    {
-                        case MessageBoxResult.Yes:
-                            Directory.Delete(DownloadPath, true);
-                            Directory.CreateDirectory(DownloadPath);
-                            break;
-                    }
+                    Directory.Delete(DownloadPath, true);
+                    Directory.CreateDirectory(DownloadPath);
                 }
 
                 Properties.Settings.Default.keepDownloads = value;
