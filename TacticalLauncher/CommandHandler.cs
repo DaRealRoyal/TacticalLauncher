@@ -6,7 +6,7 @@ namespace TacticalLauncher
     public class CommandHandler : ICommand
     {
         private readonly Action<object> _action;
-        private Func<bool> _canExecute;
+        private readonly Func<bool> _canExecute;
 
         /// <summary>
         /// Creates instance of the command handler

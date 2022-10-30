@@ -183,8 +183,7 @@ namespace TacticalLauncher
                 // restart launcher to update game states
                 if (MessageBox.Show("Successfully moved games, restarting launcher.", "Done Moving Games", MessageBoxButton.OK) == MessageBoxResult.OK)
                 {
-                    var currentExecutablePath = Process.GetCurrentProcess().MainModule.FileName;
-                    Process.Start(currentExecutablePath);
+                    Process.Start(Environment.ProcessPath);
                     Application.Current.Shutdown();
                 }
             }
