@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Navigation;
 
 namespace TacticalLauncher
@@ -30,6 +31,7 @@ namespace TacticalLauncher
 
             InitializeComponent();
             VersionTextLauncher.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            MainTabControl.SelectedIndex = Properties.Settings.Default.currentTab;
 
             //TmrTab.DataContext = tmrGDrive;
             TmrTab.DataContext = tmr;
@@ -71,6 +73,15 @@ namespace TacticalLauncher
             };
             _ = Process.Start(processStartInfo);
             e.Handled = true;
+        }
+
+        private void MainTabControl_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (e.Source is TabControl tabControl)
+            {
+                Properties.Settings.Default.currentTab = tabControl.SelectedIndex;
+                Properties.Settings.Default.Save();
+            }
         }
     }
 }

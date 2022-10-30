@@ -9,7 +9,7 @@
         ContentRendered="Window_ContentRendered"
         Title="Tactical Launcher" Height="600" Width="1000" ResizeMode="NoResize">
     <Grid>
-        <TabControl TabStripPlacement="Left">
+        <TabControl TabStripPlacement="Left" Name="MainTabControl" SelectionChanged="MainTabControl_SelectionChanged">
             <TabControl.Resources>
                 <Style TargetType="{x:Type TabItem}">
                     <Setter Property="HeaderTemplate">
