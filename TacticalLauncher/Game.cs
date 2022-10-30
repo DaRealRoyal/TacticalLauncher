@@ -147,7 +147,7 @@ namespace TacticalLauncher
             gameExeName = exe;
             gamePath = Path.Combine(settings.GamesPath, gameName);
             versionFile = Path.Combine(settings.GamesPath, gameName + "-version.txt");
-            if (File.Exists(versionFile)) LocalVersion = new Version(File.ReadAllText(versionFile)); // TODO is if check needed?
+            if (File.Exists(versionFile)) LocalVersion = new Version(File.ReadAllText(versionFile));
             if (!Directory.Exists(gamePath))
             {
                 // fallback for folders like MothershipDefender2_v2.3.1
@@ -171,7 +171,7 @@ namespace TacticalLauncher
             gameExeName = exe;
             gamePath = Path.Combine(settings.GamesPath, gameName);
             versionFile = Path.Combine(settings.GamesPath, gameName + "-version.txt");
-            if (File.Exists(versionFile)) LocalVersion = new Version(File.ReadAllText(versionFile)); // TODO is if check needed?
+            if (File.Exists(versionFile)) LocalVersion = new Version(File.ReadAllText(versionFile));
             if (!Directory.Exists(gamePath))
             {
                 // fallback for folders like MothershipDefender2_v2.3.1

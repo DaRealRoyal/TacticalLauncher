@@ -4,6 +4,8 @@ using System.ComponentModel;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -39,6 +41,7 @@ namespace TacticalLauncher
                 return;
             }
 
+#pragma warning disable CA1416 // Validate platform compatibility
             VistaFolderBrowserDialog ookiiDialog = new();
             if (ookiiDialog.ShowDialog() == true)
             {
@@ -52,6 +55,7 @@ namespace TacticalLauncher
                         break;
                 }
             }
+#pragma warning restore CA1416 // Validate platform compatibility
         }
 
         private ICommand _resetCommand;
@@ -83,13 +87,13 @@ namespace TacticalLauncher
 
         public string RawGamesPath
         {
-            get => Properties.Settings.Default.downloadPath;
+            get => Properties.Settings.Default.gamesPath;
             set => GamesPath = value;
         }
 
         public string GamesPath
         {
-            get => Properties.Settings.Default.downloadPath.Replace("%LauncherPath%", LauncherPath, StringComparison.InvariantCultureIgnoreCase);
+            get => Properties.Settings.Default.gamesPath.Replace("%LauncherPath%", LauncherPath, StringComparison.InvariantCultureIgnoreCase);
             set
             {
                 var value_replaced = value.Replace("%LauncherPath%", LauncherPath, StringComparison.InvariantCultureIgnoreCase);
@@ -100,7 +104,8 @@ namespace TacticalLauncher
                     Directory.CreateDirectory(value_replaced);
 
                     // check if target is not empty and prompt for confirmation
-                    if (Directory.EnumerateFileSystemEntries(value_replaced).Any() &&
+                    if (!Equals(GamesPath, value_replaced) &&
+                        Directory.EnumerateFileSystemEntries(value_replaced).Any() &&
                         MessageBox.Show("The selected path is not empty.\nDo you really want to continue?", "Moving Games", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
                         return;
 
@@ -116,14 +121,14 @@ namespace TacticalLauncher
 
                 // move files
                 if (!Equals(GamesPath, value_replaced) &&
-                    MessageBox.Show("Move files to new path?", "Moving Games", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                    MessageBox.Show("Move files?", "Moving Games", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
-				    if (MessageBox.Show("Please make sure all games are closed and no download or install is in progress.", "Moving Games", MessageBoxButton.OKCancel, MessageBoxImage.Warning) != MessageBoxResult.Ok)
-					    return;
+                    if (MessageBox.Show("Please make sure all games are closed and no download or install is in progress.\nDon't do anything until you see another message box!", "Moving Games", MessageBoxButton.OKCancel, MessageBoxImage.Warning) != MessageBoxResult.OK)
+                        return;
 
-				    // TODO: disable all buttons and inputs
-				    //       https://social.msdn.microsoft.com/Forums/en-US/481935ac-3e89-40c2-be5a-c560ed7e705c/need-to-disable-all-controls-on-window-xaml-from-code-behind
-			        // TODO: progress bar/text
+                    // TODO: disable all buttons and inputs
+                    //       https://social.msdn.microsoft.com/Forums/en-US/481935ac-3e89-40c2-be5a-c560ed7e705c/need-to-disable-all-controls-on-window-xaml-from-code-behind
+                    // TODO: progress bar/text
 
                     // copy files over
                     try
@@ -133,9 +138,9 @@ namespace TacticalLauncher
                     catch (Exception ex)
                     {
                         MessageBox.Show($"Couldn't copy files: {ex.Message}\nKeeping the old path.");
-                        
+
                         // delete incomplete copy
-                        try { Directory.CreateDirectory(value_replaced, true); } catch { }
+                        try { Directory.Delete(value_replaced, true); } catch { }
 
                         return;
                     }
@@ -143,7 +148,7 @@ namespace TacticalLauncher
                     // delete old files
                     try
                     {
-                        Directory.Delete(GamesPath, true); 
+                        Directory.Delete(GamesPath, true);
                     }
                     catch (Exception ex)
                     {
@@ -151,7 +156,7 @@ namespace TacticalLauncher
                     }
                 }
 
-                Properties.Settings.Default.downloadPath = value;
+                Properties.Settings.Default.gamesPath = value;
 
                 // reset DownloadPath if moving from DownloadPath to GamesPath doesn't work
                 var testPathDownloads = Path.Combine(DownloadPath, Path.GetRandomFileName());
@@ -176,14 +181,15 @@ namespace TacticalLauncher
                 RaisePropertyChanged(nameof(RawGamesPath));
 
                 // restart launcher to update game states
-                if (MessageBox.Show("Successfully moved games, restarting launcher.", "Done Moving Games", MessageBoxButton.Ok) == MessageBoxResult.Ok)
+                if (MessageBox.Show("Successfully moved games, restarting launcher.", "Done Moving Games", MessageBoxButton.OK) == MessageBoxResult.OK)
                 {
-                    System.Diagnostics.Process.Start(Application.ResourceAssembly.Location);
+                    var currentExecutablePath = Process.GetCurrentProcess().MainModule.FileName;
+                    Process.Start(currentExecutablePath);
                     Application.Current.Shutdown();
                 }
             }
         }
-        
+
         static void CopyDirectory(string sourceDir, string destinationDir, bool recursive)
         {
             // Get information about the source directory
@@ -219,23 +225,24 @@ namespace TacticalLauncher
 
         public string RawDownloadPath
         {
-            get => Properties.Settings.Default.gamesPath;
+            get => Properties.Settings.Default.downloadPath;
             set => DownloadPath = value;
         }
 
         public string DownloadPath
         {
-            get => Properties.Settings.Default.gamesPath
+            get => Properties.Settings.Default.downloadPath
                     .Replace("%GamesPath%", GamesPath, StringComparison.InvariantCultureIgnoreCase)
                     .Replace("%LauncherPath%", LauncherPath, StringComparison.InvariantCultureIgnoreCase);
             set
             {
-                if (MessageBox.Show("Please make sure no download or install is in progress.", "Moving Downloads", MessageBoxButton.OKCancel, MessageBoxImage.Warning) != MessageBoxResult.Ok)
-                    return;
-
                 var value_replaced = value
                     .Replace("%GamesPath%", GamesPath, StringComparison.InvariantCultureIgnoreCase)
                     .Replace("%LauncherPath%", LauncherPath, StringComparison.InvariantCultureIgnoreCase);
+
+                if (!Equals(DownloadPath, value_replaced) &&
+                    MessageBox.Show("Please make sure no download or install is in progress.", "Moving Downloads", MessageBoxButton.OKCancel, MessageBoxImage.Warning) != MessageBoxResult.OK)
+                    return;
 
                 // check whether path works and moving to GamesPath is possible
                 try
@@ -259,7 +266,7 @@ namespace TacticalLauncher
                     Directory.Delete(DownloadPath, true);
                 }
 
-                Properties.Settings.Default.gamesPath = value;
+                Properties.Settings.Default.downloadPath = value;
                 Properties.Settings.Default.Save();
                 RaisePropertyChanged();
                 RaisePropertyChanged(nameof(RawDownloadPath));
