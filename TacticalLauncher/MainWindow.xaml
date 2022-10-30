@@ -4,11 +4,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TacticalLauncher"
-        d:DataContext="{d:DesignInstance Type=local:Game}"
         mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
         ContentRendered="Window_ContentRendered"
-        Title="Tactical Launcher" Height="720" Width="1280" ResizeMode="NoResize">
+        Title="Tactical Launcher" Height="600" Width="1000" ResizeMode="NoResize">
     <Grid>
         <TabControl TabStripPlacement="Left">
             <TabControl.Resources>
@@ -27,34 +26,71 @@
                     <Setter Property="Padding" Value="3" />
                 </Style>
             </TabControl.Resources>
-            <TabItem Name="TmrTab" Header="Tactical Math Returns" FontFamily="/fonts/TacticalFont.otf#TacticalFont">
+            <TabItem Name="TmrTab" Header="TMR" FontFamily="/fonts/TacticalFont.otf#TacticalFont">
                 <Grid>
                     <Image Stretch="UniformToFill" Source="/images/olena-sergienko-3BlVILvh9hM-unsplash.jpg"/>
-                    <TextBlock Text="Tactical Math Returns" FontSize="96" VerticalAlignment="Top" HorizontalAlignment="Center" Foreground="White" Margin="0,200,0,0"/>
-                    <TextBlock VerticalAlignment="Bottom" HorizontalAlignment="Left" FontSize="20" Foreground="White" Margin="5,0,0,5"><Hyperlink NavigateUri="https://tacticalmath.games/" RequestNavigate="Hyperlink_RequestNavigate" Foreground="White">https://tacticalmath.games/</Hyperlink></TextBlock>
-                    <TextBlock Text="{Binding OnlineVersion, StringFormat=v{0}, TargetNullValue=''}" Visibility="{Binding OnlineVersionVisibility}" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="White" Margin="0,0,5,30"/>
-                    <TextBlock Text="{Binding LocalVersion, StringFormat=v{0}, TargetNullValue=''}" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="White" Margin="0,0,5,5"/>
-                    <TextBlock Text="{Binding ProgressText}" VerticalAlignment="Bottom" HorizontalAlignment="center" FontSize="20" Foreground="White" Margin="0,0,0,160"/>
-                    <ProgressBar Minimum="0" Value="{Binding DownloadSizeCurrent}" Maximum="{Binding DownloadSize}" Height="10" Margin="0,0,0,190" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="500"/>
-                    <Button Content="{Binding StatusText}" IsEnabled="{Binding IsReadyOrFailed}" Command="{Binding PlayCommand}" FontSize="32" Margin="0,0,0,200" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="500" Padding="20,15,20,15"/>
+                    <TextBlock Text="Tactical Math Returns" FontSize="60" Margin="0,150,0,0" VerticalAlignment="Top" HorizontalAlignment="Center" Foreground="White" />
+                    <TextBlock FontSize="18" Margin="5,0,0,5" VerticalAlignment="Bottom" HorizontalAlignment="Left" Foreground="White">
+                        <Hyperlink NavigateUri="https://tacticalmath.games/" RequestNavigate="Hyperlink_RequestNavigate" Foreground="White">https://tacticalmath.games/</Hyperlink>
+                    </TextBlock>
+                    <TextBlock Text="{Binding OnlineVersion, StringFormat='Online: v{0}', TargetNullValue='', FallbackValue='Online: v1.0'}" Visibility="{Binding OnlineVersionVisibility}" FontSize="18" Margin="0,0,5,25" VerticalAlignment="Bottom" HorizontalAlignment="Right" Foreground="White"/>
+                    <TextBlock Text="{Binding LocalVersion, StringFormat=v{0}, TargetNullValue='', FallbackValue=v1.0}" FontSize="18" Margin="0,0,5,5" VerticalAlignment="Bottom" HorizontalAlignment="Right" Foreground="White"/>
+                    <TextBlock Text="{Binding ProgressText, FallbackValue='Progress messages appear here'}" FontSize="18" Margin="0,0,0,100" VerticalAlignment="Bottom" HorizontalAlignment="center" Foreground="White" />
+                    <ProgressBar Minimum="0" Value="{Binding DownloadSizeCurrent}" Maximum="{Binding DownloadSize}" Height="10" Margin="0,0,0,150" Width="420" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                    <Button Content="{Binding StatusText, FallbackValue=Play}" IsEnabled="{Binding IsReadyOrFailed}" Command="{Binding PlayCommand}" FontSize="28" Width="420" Height="60" Margin="0,0,0,160" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
                 </Grid>
             </TabItem>
-            <TabItem Name="MD2Tab" Header="Mothership Defender 2">
+            <TabItem Name="MD2Tab" Header="MD2">
                 <Grid>
-                    <Image Source="/images/mothership.png" Margin="271,145,0,0" Height="175" VerticalAlignment="Top" HorizontalAlignment="Left" Width="175"/>
-                    <TextBlock Text="Tactical Math Returns" FontSize="48" VerticalAlignment="Top" Foreground="Black" Margin="476,195,0,0" HorizontalAlignment="Left" Width="450"/>
-                    <TextBlock VerticalAlignment="Bottom" HorizontalAlignment="Left" FontSize="20" Foreground="Black" Margin="5,0,0,5"><Hyperlink NavigateUri="https://nalsai.de/mothershipdefender2/" RequestNavigate="Hyperlink_RequestNavigate" Foreground="Black">https://nalsai.de/mothershipdefender2/</Hyperlink></TextBlock>
-                    <TextBlock Text="{Binding OnlineVersion, StringFormat=v{0}, TargetNullValue=''}" Visibility="{Binding OnlineVersionVisibility}" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="Black" Margin="0,0,5,30"/>
-                    <TextBlock Text="{Binding LocalVersion, StringFormat=v{0}, TargetNullValue=''}" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="Black" Margin="0,0,5,5"/>
-                    <TextBlock Text="{Binding ProgressText}" VerticalAlignment="Bottom" HorizontalAlignment="center" FontSize="20" Foreground="Black" Margin="0,0,0,160"/>
-                    <ProgressBar Minimum="0" Value="{Binding DownloadSizeCurrent}" Maximum="{Binding DownloadSize}" Height="10" Margin="0,0,0,190" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="500"/>
-                    <Button Content="{Binding StatusText}" IsEnabled="{Binding IsReadyOrFailed}" Command="{Binding PlayCommand}" FontSize="32" Margin="0,0,0,200" VerticalAlignment="Bottom" HorizontalAlignment="Center" Width="500" Padding="20,15,20,15"/>
+                    <Grid Margin="0,100,0,0" VerticalAlignment="Top" HorizontalAlignment="Center">
+                        <Image Source="/images/mothership.png" Margin="0,0,0,0" Height="160" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                        <TextBlock Text="Mothership Defender 2" FontSize="42" Padding="0,0,20,5" Margin="200,0,0,0" VerticalAlignment="Center"/>
+                    </Grid>
+                    <TextBlock FontSize="18" Margin="5,0,0,5" VerticalAlignment="Bottom" HorizontalAlignment="Left">
+                        <Hyperlink NavigateUri="https://nalsai.de/mothershipdefender2/" RequestNavigate="Hyperlink_RequestNavigate" Foreground="Black">https://nalsai.de/mothershipdefender2/</Hyperlink>
+                    </TextBlock>
+                    <TextBlock Text="{Binding OnlineVersion, StringFormat='Online: v{0}', TargetNullValue='', FallbackValue='Online: v1.0'}" Visibility="{Binding OnlineVersionVisibility}" FontSize="18" Margin="0,0,5,25" VerticalAlignment="Bottom" HorizontalAlignment="Right"/>
+                    <TextBlock Text="{Binding LocalVersion, StringFormat=v{0}, TargetNullValue='', FallbackValue=v1.0}" FontSize="18" Margin="0,0,5,5" VerticalAlignment="Bottom" HorizontalAlignment="Right"/>
+                    <TextBlock Text="{Binding ProgressText, FallbackValue='Progress messages appear here'}" FontSize="18" Margin="0,0,0,100" VerticalAlignment="Bottom" HorizontalAlignment="center"/>
+                    <ProgressBar Minimum="0" Value="{Binding DownloadSizeCurrent}" Maximum="{Binding DownloadSize}" Height="10" Margin="0,0,0,150" Width="420" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+                    <Button Content="{Binding StatusText, FallbackValue=Play}" IsEnabled="{Binding IsReadyOrFailed}" Command="{Binding PlayCommand}" FontSize="28" Width="420" Height="60" Margin="0,0,0,160" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
                 </Grid>
             </TabItem>
-            <TabItem Header="Settings">
-                <Grid>
-                    <TextBlock x:Name="VersionTextLauncherLabel" Text="Launcher Version:" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="Black" Margin="0,0,80,0"/>
-                    <TextBlock x:Name="VersionTextLauncher" Text="0" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="Black"/>
+            <TabItem Name="SettingsTab" Header="Settings">
+                <Grid Margin="20,20,20,20">
+                    <Grid Margin="0,0,0,0" VerticalAlignment="Top">
+                        <TextBlock Padding="0,2,0,0" Text="Launcher Path" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        <TextBlock Padding="1,2,0,0" Margin="120,0,90,0" Text="{Binding LauncherPath}" Height="20" VerticalAlignment="Top"/>
+                        <Button Content="Browse" Command="{Binding BrowseCommand}" CommandParameter="{Binding LauncherPath}" Height="20" Width="80" Margin="0,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                    </Grid>
+                    <Grid Margin="0,30,0,0" VerticalAlignment="Top">
+                        <TextBlock Padding="0,2,0,0" Text="Config Path" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        <TextBlock Padding="1,2,0,0" Margin="120,0,90,0" Text="{Binding ConfigPath}" Height="20" VerticalAlignment="Top"/>
+                        <Button Content="Browse" Command="{Binding BrowseCommand}" CommandParameter="{Binding ConfigPathDirectory}" Height="20" Width="80" Margin="0,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                    </Grid>
+                    <Grid Margin="0,60,0,0" VerticalAlignment="Top">
+                        <TextBlock Padding="0,2,0,0" Text="Games Path" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        <TextBox Text="{Binding RawGamesPath}" Margin="120,0,270,0" Height="20" VerticalAlignment="Top"/>
+                        <Button Content="Select" Command="{Binding SelectCommand}" CommandParameter="GamesPath" Height="20" Width="80" Margin="0,0,180,0" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                        <Button Content="Reset"  Command="{Binding ResetCommand}"  CommandParameter="GamesPath" Height="20" Width="80" Margin="0,0,90,0" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                        <Button Content="Browse" Command="{Binding BrowseCommand}" CommandParameter="{Binding GamesPath}" Height="20" Width="80" Margin="0,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                    </Grid>
+                    <Grid Margin="0,90,0,0" VerticalAlignment="Top">
+                        <TextBlock Padding="0,2,0,0" Text="Download Path" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        <TextBox Text="{Binding RawDownloadPath}" Margin="120,0,270,0" Height="20" VerticalAlignment="Top"/>
+                        <Button Content="Select" Command="{Binding SelectCommand}" CommandParameter="DownloadPath" Height="20" Width="80" Margin="0,0,180,0" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                        <Button Content="Reset"  Command="{Binding ResetCommand}"  CommandParameter="DownloadPath" Height="20" Width="80" Margin="0,0,90,0" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                        <Button Content="Browse" Command="{Binding BrowseCommand}" CommandParameter="{Binding DownloadPath}" Height="20" Width="80" Margin="0,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                    </Grid>
+                    <Grid Margin="0,120,0,0" VerticalAlignment="Top">
+                        <TextBlock Padding="0,2,0,0" Text="Keep Downloads" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        <CheckBox Padding="1,0,0,0" Margin="120,2,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsChecked="{Binding KeepDownloads}"/>
+                    </Grid>
+
+                    <Grid Margin="0,160,0,0" VerticalAlignment="Top">
+                        <TextBlock Text="Launcher Version" Padding="0,2,0,0" Margin="0,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        <TextBlock x:Name="VersionTextLauncher" Text="1.0.0.0" Padding="1,2,0,0" Margin="120,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                    </Grid>
                 </Grid>
             </TabItem>
         </TabControl>
