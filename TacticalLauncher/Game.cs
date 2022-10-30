@@ -29,12 +29,8 @@ namespace TacticalLauncher
 
     class Game : INotifyPropertyChanged
     {
-        static readonly string launcherPath = Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).ToString());
-        static readonly string gamesPath = Path.Combine(launcherPath, "Games");
-        static readonly string downloadPath = Path.Combine(gamesPath, "Downloads");
-
+        static SettingsController settings;
         static readonly GitHubClient client = new(new ProductHeaderValue("TacticalLauncher"));
-
         readonly string versionFile;
         readonly string gameName;
         readonly string gameExeName;
@@ -43,11 +39,10 @@ namespace TacticalLauncher
         string gamePath;
         string gameExe;
 
-
         private GameState _state;
         public GameState State
         {
-            get { return _state; }
+            get => _state;
             set
             {
                 _state = value;
@@ -58,24 +53,18 @@ namespace TacticalLauncher
             }
         }
 
-        public string StatusText
+        public string StatusText => _state switch
         {
-            get
-            {
-                return _state switch
-                {
-                    GameState.start => "Checking For Updates...",
-                    GameState.clickPlay => "Play",
-                    GameState.clickUpdate => "Update",
-                    GameState.clickInstall => "Install",
-                    GameState.failedRetry => "Failed - Retry?",
-                    GameState.failed => "Failed",
-                    GameState.downloading => "Downloading...",
-                    GameState.installing => "Installing...",
-                    _ => _state.ToString(),
-                };
-            }
-        }
+            GameState.start => "Checking For Updates...",
+            GameState.clickPlay => "Play",
+            GameState.clickUpdate => "Update",
+            GameState.clickInstall => "Install",
+            GameState.failedRetry => "Failed - Retry?",
+            GameState.failed => "Failed",
+            GameState.downloading => "Downloading...",
+            GameState.installing => "Installing...",
+            _ => _state.ToString(),
+        };
 
         public bool IsReady =>
             _state == GameState.clickPlay ||
@@ -88,7 +77,7 @@ namespace TacticalLauncher
         private long _downloadSize;
         public long DownloadSize
         {
-            get { return _downloadSize; }
+            get => _downloadSize;
             set
             {
                 _downloadSize = value;
@@ -99,7 +88,7 @@ namespace TacticalLauncher
         private long _downloadSizeCurrent;
         public long DownloadSizeCurrent
         {
-            get { return _downloadSizeCurrent; }
+            get => _downloadSizeCurrent;
             set
             {
                 _downloadSizeCurrent = value;
@@ -110,7 +99,7 @@ namespace TacticalLauncher
         private string _progressText;
         public string ProgressText
         {
-            get { return _progressText; }
+            get => _progressText;
             set
             {
                 _progressText = value;
@@ -119,10 +108,9 @@ namespace TacticalLauncher
         }
 
         private Version _onlineVersion;
-
         public Version OnlineVersion
         {
-            get { return _onlineVersion; }
+            get => _onlineVersion;
             set
             {
                 _onlineVersion = value;
@@ -134,7 +122,7 @@ namespace TacticalLauncher
         private Version _localVersion;
         public Version LocalVersion
         {
-            get { return _localVersion; }
+            get => _localVersion;
             set
             {
                 _localVersion = value;
@@ -143,10 +131,7 @@ namespace TacticalLauncher
             }
         }
 
-        public Visibility OnlineVersionVisibility
-        {
-            get { return Equals(_onlineVersion, _localVersion) ? Visibility.Hidden : Visibility.Visible; }
-        }
+        public Visibility OnlineVersionVisibility => Equals(_onlineVersion, _localVersion) ? Visibility.Hidden : Visibility.Visible;
 
         /// <summary>
         /// Creates an instance of Game using download links
@@ -155,13 +140,14 @@ namespace TacticalLauncher
         /// <param name="versionUrl">Download URL of the text file containing the current verison string of the game</param>
         /// <param name="name">Name of the game (.zip has to contain a folder with the name)</param>
         /// <param name="exe">Name of the game's .exe file  (.zip has to contain the exe in the folder)</param>
-        public Game(string url, string versionUrl, string name, string exe)
+        public Game(string url, string versionUrl, string name, string exe, SettingsController set)
         {
+            settings = set;
             gameName = name;
             gameExeName = exe;
-            gamePath = Path.Combine(gamesPath, gameName);
-            versionFile = Path.Combine(gamesPath, gameName + "-version.txt");
-            if (File.Exists(versionFile)) LocalVersion = new Version(File.ReadAllText(versionFile)); // TODO is if check needed?
+            gamePath = Path.Combine(settings.GamesPath, gameName);
+            versionFile = Path.Combine(settings.GamesPath, gameName + "-version.txt");
+            if (File.Exists(versionFile)) LocalVersion = new Version(File.ReadAllText(versionFile));
             if (!Directory.Exists(gamePath))
             {
                 // fallback for folders like MothershipDefender2_v2.3.1
@@ -178,13 +164,14 @@ namespace TacticalLauncher
         /// <summary>
         /// Creates an instance of Game using GitHub Releases
         /// </summary>
-        public Game(string owner, string name, string exe)
+        public Game(string owner, string name, string exe, SettingsController set)
         {
+            settings = set;
             gameName = name;
             gameExeName = exe;
-            gamePath = Path.Combine(gamesPath, gameName);
-            versionFile = Path.Combine(gamesPath, gameName + "-version.txt");
-            if (File.Exists(versionFile)) LocalVersion = new Version(File.ReadAllText(versionFile)); // TODO is if check needed?
+            gamePath = Path.Combine(settings.GamesPath, gameName);
+            versionFile = Path.Combine(settings.GamesPath, gameName + "-version.txt");
+            if (File.Exists(versionFile)) LocalVersion = new Version(File.ReadAllText(versionFile));
             if (!Directory.Exists(gamePath))
             {
                 // fallback for folders like MothershipDefender2_v2.3.1
@@ -255,9 +242,9 @@ namespace TacticalLauncher
 
         public async void CheckUpdates()
         {
-            if (UpdateRateLimiter() && File.Exists(gameExe))
+            if (UpdateRateLimiter() && File.Exists(gameExe)) // TODO fix for md2 with v in folder name
             {
-                State = GameState.clickPlay;
+                State = GameState.clickPlay;    // TODO: allow update if already found but not installed
                 return;
             }
 
@@ -317,12 +304,12 @@ namespace TacticalLauncher
             State = GameState.downloading;
             try
             {
-                Directory.CreateDirectory(downloadPath);
+                Directory.CreateDirectory(settings.DownloadPath);
 
                 FileDownloader downloader = new();
                 downloader.DownloadProgressChanged += new FileDownloader.DownloadProgressChangedEventHandler(UpdateProgressCallback);
                 downloader.DownloadFileCompleted += new AsyncCompletedEventHandler(DownloadCompletedCallback);
-                downloader.DownloadFileAsync(downloadUrl, Path.Combine(downloadPath, gameName + "_v" + OnlineVersion + ".zip"), OnlineVersion);
+                downloader.DownloadFileAsync(downloadUrl, Path.Combine(settings.DownloadPath, gameName + "_v" + OnlineVersion + ".zip"), OnlineVersion);
             }
             catch (Exception ex)
             {
@@ -330,7 +317,6 @@ namespace TacticalLauncher
                 MessageBox.Show($"Error downloading game: {ex.Message}");
             }
         }
-
 
         private void UpdateProgressCallback(object sender, FileDownloader.DownloadProgress e)
         {
@@ -353,11 +339,11 @@ namespace TacticalLauncher
 
             try
             {
-                string zipPath = Path.Combine(downloadPath, gameName + "_v" + version + ".zip");
+                string zipPath = Path.Combine(settings.DownloadPath, gameName + "_v" + version + ".zip");
 
                 if (Directory.Exists(gamePath)) Directory.Delete(gamePath, true);
-                await Task.Run(() => ZipFile.ExtractToDirectory(zipPath, gamesPath));
-                File.Delete(zipPath);
+                await Task.Run(() => ZipFile.ExtractToDirectory(zipPath, settings.GamesPath));
+                if (!settings.KeepDownloads) File.Delete(zipPath);
 
                 File.WriteAllText(versionFile, version.ToString());
                 LocalVersion = version;
@@ -380,7 +366,7 @@ namespace TacticalLauncher
         }
 
         private ICommand _playCommand;
-        public ICommand PlayCommand => _playCommand ??= new CommandHandler(() => Play(), () => true);
+        public ICommand PlayCommand => _playCommand ??= new CommandHandler((x) => Play(), () => true);
 
         public void Play()
         {
@@ -407,16 +393,9 @@ namespace TacticalLauncher
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected virtual void RaisePropertyChanged([CallerMemberName] string propertyname = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
-        }
-
         // Source: https://stackoverflow.com/a/14488941
-        static readonly string[] SizeSuffixes = { "bytes", "KiB", "MiB", "GiB", "TiB" };
-        static string SizeSuffix(Int64 value, int decimalPlaces = 1)
+        private static readonly string[] sizeSuffixes = { "bytes", "KiB", "MiB", "GiB", "TiB" };
+        public static string SizeSuffix(long value, int decimalPlaces = 1)
         {
             if (decimalPlaces < 0) { throw new ArgumentOutOfRangeException(nameof(decimalPlaces)); }
             if (value < 0) { return "-" + SizeSuffix(-value, decimalPlaces); }
@@ -439,7 +418,11 @@ namespace TacticalLauncher
 
             return string.Format("{0:n" + decimalPlaces + "} {1}",
                 adjustedSize,
-                SizeSuffixes[mag]);
+                sizeSuffixes[mag]);
         }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected virtual void RaisePropertyChanged([CallerMemberName] string propertyname = null)
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
     }
 }

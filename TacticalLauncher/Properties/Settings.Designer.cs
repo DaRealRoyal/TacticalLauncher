@@ -22,5 +22,41 @@ namespace TacticalLauncher.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("%LauncherPath%\\Games")]
+        public string gamesPath {
+            get {
+                return ((string)(this["gamesPath"]));
+            }
+            set {
+                this["gamesPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("%GamesPath%\\Downloads")]
+        public string downloadPath {
+            get {
+                return ((string)(this["downloadPath"]));
+            }
+            set {
+                this["downloadPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool keepDownloads {
+            get {
+                return ((bool)(this["keepDownloads"]));
+            }
+            set {
+                this["keepDownloads"] = value;
+            }
+        }
     }
 }
