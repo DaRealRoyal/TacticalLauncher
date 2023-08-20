@@ -31,7 +31,7 @@
                     <Image Stretch="UniformToFill" Source="/images/olena-sergienko-3BlVILvh9hM-unsplash.jpg"/>
                     <TextBlock Text="Tactical Math Returns" FontSize="60" Margin="0,150,0,0" VerticalAlignment="Top" HorizontalAlignment="Center" Foreground="White" />
                     <TextBlock FontSize="18" Margin="5,0,0,5" VerticalAlignment="Bottom" HorizontalAlignment="Left" Foreground="White">
-                        <Hyperlink NavigateUri="https://tacticalmath.games/" RequestNavigate="Hyperlink_RequestNavigate" Foreground="White">https://tacticalmath.games/</Hyperlink>
+                        <Hyperlink NavigateUri="https://tmr.nalsai.de/" RequestNavigate="Hyperlink_RequestNavigate" Foreground="White">https://tmr.nalsai.de/</Hyperlink>
                     </TextBlock>
                     <TextBlock Text="{Binding OnlineVersion, StringFormat='Online: v{0}', TargetNullValue='', FallbackValue='Online: v1.0'}" Visibility="{Binding OnlineVersionVisibility}" FontSize="18" Margin="0,0,5,25" VerticalAlignment="Bottom" HorizontalAlignment="Right" Foreground="White"/>
                     <TextBlock Text="{Binding LocalVersion, StringFormat=v{0}, TargetNullValue='', FallbackValue=v1.0}" FontSize="18" Margin="0,0,5,5" VerticalAlignment="Bottom" HorizontalAlignment="Right" Foreground="White"/>

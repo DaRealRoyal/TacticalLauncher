@@ -11,7 +11,7 @@ namespace TacticalLauncher
 {
     public partial class MainWindow : Window
     {
-        private const string updateUrl = "https://tacticalmath.games/download";
+        private const string updateUrl = "https://tmr.nalsai.de/download";
         static readonly SettingsController settings = new();
 
         //readonly Game tmrGDrive = new(
